@@ -1,0 +1,11 @@
+# Downloaded data (fetch with `python run_all.py --download`)
+data/raw/
+
+# Generated outputs (rebuild with `python run_all.py`)
+outputs/
+
+.claude/
+__pycache__/
+*.pyc
+.venv/
+venv/
