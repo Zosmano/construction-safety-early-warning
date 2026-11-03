@@ -24,7 +24,7 @@ Analysis and design by Osman Zakaria, PMP. **Independent work**: not produced by
 
 | Province | Construction claims per 100 workers (real) | Simulated | Test events | Flagged in advance: shared → own cut-off | AUC | Red-day lift |
 |---|---|---|---|---|---|---|
-| British Columbia | 3.0 (WorkSafeBC) | 2.8 | 292 | 85% → **85%** | 0.74 | 3.2× |
+| British Columbia | 3.0 (WorkSafeBC) | 2.8 | 292 | 85% → **85%** | 0.74 | 3.1× |
 | Alberta | 1.7 (AWCBC ÷ StatCan) | 2.2 | 98 | 72% → **77%** | 0.74 | 3.5× |
 | Ontario | 0.9 (AWCBC ÷ StatCan) | 1.0 | 80 | 76% → **88%** | 0.75 | 3.6× |
 
@@ -213,7 +213,7 @@ python run_all.py --download
 ## Limits
 
 - **Simulated logs.** The leading indicators are simulated, so the performance numbers show what the method can do with data of this kind, not what any real site will see. A pilot on a contractor's own records is the next step.
-- **Ontario still trails.** Province cut-offs lift Ontario to 67% of events flagged, but its ranking (AUC 0.67) is the weakest; more Ontario sites or Ontario-specific features would help.
+- **Small provinces are less certain.** Ontario has the fewest test events (80), and reaching 88% flagged takes its own cut-offs, at the highest alert load: 14 per site each week, up from 10. Alberta flags the smallest share (77% of 98 test events). More sites in both provinces would help.
 - **Rates are not comparable across boards.** Coverage and lost-time definitions differ by province.
 - **Weather.** Gusts are estimated from hourly mean wind (×1.5), and observed weather stands in for the forecast in history.
 - **Legislation.** References point to the governing provision; check the current text.
