@@ -103,6 +103,7 @@ Code: `ssew/nyc.py`. Run `python run_all.py --download` to fetch the data, then 
   - **the file is read in the browser only: it is never uploaded, saved or shared.** A built-in example (60 work days, one zone deteriorating) shows the whole flow without a file.
 - **Live site.** Press **Play** to watch risk move across the site plan through the build:
   - zones change between green, amber and red, and red zones pulse;
+  - the clock has sound, with a tick for each day that deepens as the alert level rises, a bell each new month, a cue when the level changes and a mark for each recorded incident (a Sound button turns it off);
   - crews (hard-hatted dots) move inside their zones;
   - rain, snow, wind streaks and heat shimmer appear on the days they happened;
   - the crane jib turns, and stops with a "stood down" banner when high wind is forecast;

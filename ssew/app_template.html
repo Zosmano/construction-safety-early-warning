@@ -236,6 +236,7 @@ footer b{color:var(--navy-ink)}
       <button class="btn" id="nextRed">Next red alert ›</button>
       <button class="btn live" id="goLive"><i></i>Live</button>
       <select id="speed" aria-label="Speed"><option value="900">Slow</option><option value="420" selected>Normal</option><option value="160">Fast</option></select>
+      <button class="btn" id="clockSound" aria-pressed="true" title="The clock's sound: a tick for each day, a bell each new month, and a cue when the alert level changes or an incident is recorded"></button>
     </div>
     <div class="chart" id="timeline"></div>
   </div>
@@ -985,9 +986,30 @@ const phaseOf = d => [["Excavation", "2023-03-01", "2023-08-15"], ["Foundations"
 
 function play() {
   if (timer) { clearInterval(timer); timer = null; $("#play").textContent = "▶ Play"; return; }
-  $("#play").textContent = "❚❚ Pause";
-  timer = setInterval(() => { day = (day + 1) % H.days.length; render(); }, +$("#speed").value);
+  $("#play").textContent = "❚❚ Pause"; audioInit(); CLK.band = -1;
+  timer = setInterval(() => { day = (day + 1) % H.days.length; render(); clockSound(); }, +$("#speed").value);
 }
+/* the clock's sound, on the same synthesised audio as the films: a tick-tock that deepens as the site's alert level rises,
+   a bell each new month, a cue when the level changes (spaced out so a run of flips doesn't nag), a mark for each recorded incident */
+const CLK = { tock: false, band: -1, lastCue: -9 };
+function clockSound() {
+  if (!SND.ctx || !SND.on || $("#live").hidden) return;
+  const d = H.days[day], prev = H.days[day - 1], now = SND.ctx.currentTime;
+  const band = Math.max(-1, ...ZIDS.map(z => H.risk[z][day] ? H.risk[z][day][1] : -1));
+  CLK.tock = !CLK.tock;
+  const pitch = [1500, 1250, 1000][Math.max(0, band)] * (CLK.tock ? 1 : .78);
+  tone(pitch, .04, "triangle", .1); burst("highpass", 3200, .025, .05);
+  if (prev && d.slice(0, 7) !== prev.slice(0, 7)) [880, 1320].forEach((f, k) => tone(f, .9, "sine", .05, null, k * .03));
+  if (CLK.band >= 0 && band !== CLK.band && now - CLK.lastCue > 2.5) {
+    if (band === 2) { tone(392, .5, "triangle", .13); tone(311, .7, "triangle", .13, null, .22); }
+    else if (band === 1 && CLK.band < 1) tone(660, .4, "sine", .1, 587);
+    else if (band === 0) [523, 659, 784].forEach((f, k) => tone(f, .5, "sine", .08, null, k * .09));
+    if (band === 2 || (band === 1 && CLK.band < 1) || band === 0) CLK.lastCue = now;
+  }
+  CLK.band = band;
+  H.events.filter(e => e.d === d).slice(0, 2).forEach((e, k) => e.k === "High-potential near miss" ? tone(520, .22, "square", .05, 340, k * .1) : tone(95, .4, "sine", .4, 42, k * .1));
+}
+$("#clockSound").onclick = () => { audioInit(); setSound(!SND.on); };
 $("#play").onclick = play;
 $("#speed").onchange = () => { if (timer) { play(); play(); } };
 $("#prev").onclick = () => { day = Math.max(0, day - 1); render(); };
@@ -2336,7 +2358,8 @@ function audioFrame(t) {
 function setSound(on) { SND.on = on; if (SND.out) SND.out.gain.setTargetAtTime(on ? .85 : 0, SND.ctx.currentTime, .05); saveSnd(); paintSnd(); }
 function setVoice(on) { SND.voice = on; if (!on) hush(); saveSnd(); paintSnd(); }
 function saveSnd() { try { localStorage.setItem("ssew.sound", JSON.stringify({ on: SND.on, voice: SND.voice })); } catch (_) {} }
-function paintSnd() { const b = $("#fmSound"), v = $("#fmVoice"); if (!b) return;
+function paintSnd() { const c = $("#clockSound"); if (c) { c.textContent = SND.on ? "🔊 Sound" : "🔇 Sound off"; c.setAttribute("aria-pressed", SND.on); }
+  const b = $("#fmSound"), v = $("#fmVoice"); if (!b) return;
   b.textContent = SND.on ? "🔊 Sound" : "🔇 Sound off"; b.setAttribute("aria-pressed", SND.on); v.textContent = SND.voice ? "🗣 Narrator" : "🤐 Narrator off"; v.setAttribute("aria-pressed", SND.voice);
   if (!window.speechSynthesis) { v.disabled = true; v.title = "This browser has no speech voice"; } }
 
@@ -2430,7 +2453,7 @@ function show(id) {
   if (!drawn[id]) { drawn[id] = true; (DRAW[id] || (() => {}))(); }
 }
 tabs.forEach(a => a.addEventListener("click", e => { e.preventDefault(); show(a.dataset.tab); try { history.replaceState(null, "", "#" + a.dataset.tab); } catch (_) {} }));
-cover(); kpis(); plan(); timeline();
+cover(); kpis(); plan(); timeline(); paintSnd();
 day = Math.max(0, testStart() + 40);
 for (let k = 0; k < H.days.length; k++) { const i = (day + k) % H.days.length; if (ZIDS.some(z => H.risk[z][i] && H.risk[z][i][1] === 2)) { day = i; break; } }
 render(); requestAnimationFrame(frame);
