@@ -200,6 +200,15 @@ table.form td{padding:4px 6px}
 #fdTab tr[data-z]{cursor:pointer}#fdTab td{font-size:13.5px}#fdTab .ref{display:block;font-size:12px;color:var(--muted)}
 #fdZ input[type=text]{width:100%;min-width:190px;box-sizing:border-box;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:6px;padding:4px 6px}#fdZ input[type=number]{width:76px;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:6px;padding:4px 6px}
 .zcrew{font:600 15px var(--f-body);fill:var(--muted)}
+#plan{overflow:hidden}
+.scang{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:18px;margin-top:12px}@media(max-width:760px){.scang{grid-template-columns:minmax(0,1fr)}}
+#scMap svg{display:block;width:100%;height:auto;border-radius:12px}
+.scz{fill:var(--plane2);stroke:var(--axis);stroke-width:2;transition:fill .35s}.scz.b2{fill:color-mix(in srgb,var(--red) 62%,var(--surface))}.scz.b1{fill:color-mix(in srgb,var(--amber) 62%,var(--surface))}.scz.b0{fill:color-mix(in srgb,var(--green) 34%,var(--surface))}.scz.now{stroke:var(--signal);stroke-width:7}
+.scnum{font:800 25px var(--f-head);fill:var(--ink);text-anchor:middle;pointer-events:none}.scpc{font:700 17px var(--f-head);fill:var(--ink);text-anchor:middle;pointer-events:none}
+.scsweep{transform-origin:500px 320px;animation:scspin 2.2s linear infinite}@keyframes scspin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.scsweep{animation:none;display:none}}
+.scroute{fill:none;stroke:var(--navy);stroke-width:5;stroke-dasharray:14 10;stroke-linecap:round}
+.scsteps{list-style:none;margin:0;padding:0;display:grid;gap:7px;font-size:13.5px;align-content:start;min-width:0}.scsteps li{padding:7px 9px;border:1px solid var(--border);border-radius:9px;background:var(--surface);overflow-wrap:anywhere}.scsteps li b{display:block;font:700 13px var(--f-head)}.scsteps li.run{border-color:var(--signal)}.scsteps li.gap{border-left:5px solid var(--amber)}.scsteps li span{color:var(--ink2)}
+.sct{display:inline-block;border-radius:999px;padding:3px 9px;font:700 11.5px var(--f-head);white-space:nowrap}.sct.b2{background:var(--red);color:#fff}.sct.b1{background:var(--amber);color:#1a1205}.sct.b0{background:var(--green);color:#fff}.sct.n{background:var(--plane2);color:var(--muted)}
 .sitebar{background:var(--plane);border-bottom:1px solid var(--border)}
 .sb{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding-block:10px;font-size:13.5px}
 .sb label{display:flex;gap:6px;align-items:center;color:var(--muted)}
@@ -265,6 +274,14 @@ footer b{color:var(--navy-ink)}
 
 <main><div class="wrap">
 <section id="live">
+  <div class="card" id="scanCard" style="margin-bottom:16px">
+    <div class="fdh"><div><h2 id="scT" style="margin:0">Site scan</h2><p class="note" id="scL" style="margin:2px 0 0"></p></div><div class="bar" style="margin:0"><button class="btn" id="scSkip" hidden>Skip to results</button><button class="btn primary" id="scGo">Scan again</button></div></div>
+    <div class="scang"><div><div id="scMap"></div><div class="legend" style="margin-top:8px"><span><i style="background:var(--red)"></i>Potential injury area</span><span><i style="background:var(--amber)"></i>Potential near-miss area</span><span><i style="background:var(--green)"></i>No warning signs</span><span><i style="background:var(--plane2)"></i>No work</span><span>- - - Safety walk</span></div></div>
+      <ol class="scsteps" id="scSteps" aria-live="polite"></ol></div>
+    <div class="grid g4" id="scK" style="margin:12px 0"></div>
+    <div class="scroll"><table class="t" id="scTab"></table></div>
+    <p class="note" id="scN" style="margin-bottom:0"></p>
+  </div>
   <div class="card" id="fdCard" style="margin-bottom:16px">
     <div class="fdh"><div><h2 id="fdT" style="margin:0"></h2><p class="note" id="fdL" style="margin:2px 0 0"></p></div><button class="btn" id="fdEd">Edit zones</button></div>
     <div class="grid g4" id="fdK" style="margin:12px 0"></div>
@@ -744,6 +761,10 @@ function genDay(z, crew, mult, r) {                    // one day's readings; mu
     new: Math.max(0, +(B.new * (1 + .8 * (mult - 1)) + n() * 2).toFixed(1)), ot: Math.max(0, +(B.ot * (1 + 1.2 * (mult - 1)) + n() * 2).toFixed(1)),
     trades: Math.max(1, Math.round(B.trades + n())), permits: pois(B.permits * mult, r) };
 }
+function typicalDay(z, crew) {                         // an unlogged day: the zone's average readings for its crew, the same every time
+  if (!crew) return null; const B = BASE[z], c = crew / Math.max(1, B.crew);
+  return { crew, nm: B.nm * c, obs: B.obs * Math.sqrt(c), ppe: B.ppe, house: B.house, new: B.new, ot: B.ot, trades: Math.max(1, Math.round(B.trades)), permits: B.permits };
+}
 /* Simulate a stretch of days on the project calendar and score every zone every day with the trained model.
    mode: "typical" (zones drift and sometimes deteriorate on their own), "deteriorate" (one zone's crew climate
    worsens through the window), "controls" (controls in place everywhere). Weather: one recorded year. */
@@ -782,7 +803,7 @@ function contextSrc(doc) {
   const known = Object.fromEntries(feedDocs.map(f => [f.date, f]));
   ZIDS.forEach(z => { src.logs[z] = Object.fromEntries(FIELDS_ALL.map(k => [k, []])); src.crew[z] = [];
     dates.forEach(q => { const kd = q === d ? doc : known[q];
-      let v = kd ? ((kd.zones || {})[z] || null) : genDay(z, crewAt(z, q), 1, r);
+      let v = kd ? ((kd.zones || {})[z] || null) : typicalDay(z, crewAt(z, q));
       if (v && !(v.crew > 0)) v = null;
       src.crew[z].push(v ? v.crew : 0); FIELDS_ALL.forEach(k => src.logs[z][k].push(v ? (v[k] ?? null) : (k === "crew" ? 0 : null))); }); });
   return src;
@@ -810,7 +831,7 @@ function buildProjection() {
     P.weather.tmin.push(avg("tmin")); P.weather.chill.push(Math.min(...ws.map(w => w.chill))); P.weather.snow.push(ws.filter(w => w.snow).length >= 2); P.weather.dir.push(-1);
     const doc = known[d]; if (doc) { P.fc[d] = doc.weather; P.live.add(d); (doc.events || []).forEach(e => P.events.push({ d, z: e.zone, k: e.kind, f: "Logged on site", live: true })); } });
   ZIDS.forEach(z => { P.logs[z] = Object.fromEntries(FIELDS_ALL.map(k => [k, []])); P.crew[z] = []; P.risk[z] = [];
-    dates.forEach(d => { const doc = known[d]; let v = doc ? ((doc.zones || {})[z] || null) : genDay(z, crewAt(z, d), 1, r);
+    dates.forEach(d => { const doc = known[d]; let v = doc ? ((doc.zones || {})[z] || null) : typicalDay(z, crewAt(z, d));
       if (v && !(v.crew > 0)) v = null;
       P.crew[z].push(v ? v.crew : 0); FIELDS_ALL.forEach(k => P.logs[z][k].push(v ? (v[k] ?? null) : (k === "crew" ? 0 : null))); }); });
   ZIDS.forEach(z => dates.forEach((d, i) => { const x = featuresSrc(P, z, i);
@@ -863,7 +884,7 @@ function setSite(s) {
   LFC = {}; loadClimate(); PROJ = null; drawSiteBar(); cover();
   ["uProv", "phProv"].forEach(id => { const e = document.getElementById(id); if (e) e.value = SITE.jur; });
   PM.prov = SITE.jur; if (drawn.premium) { pmForm(); pmRender(); }
-  loadForecast(false).finally(() => { PROJ = null; if (view !== "hist" && view !== "up") setView("proj"); if (drawn.forecast && typeof runForecast === "function") runForecast(false); if (drawn.provinces) DRAW.provinces(); if (iRun) iRun(); });
+  loadForecast(false).finally(() => { PROJ = null; if (view !== "hist" && view !== "up") setView("proj"); if (drawn.forecast && typeof runForecast === "function") runForecast(false); if (drawn.provinces) DRAW.provinces(); if (iRun) iRun(); if (entered && $("#scMap svg")) runScan(true); });
 }
 /* ================================================================== live weather */
 let iRun = null, WXD = null;                                          // the forecast shown: normalised days, source and time
@@ -993,7 +1014,7 @@ function openShow() {                                    // the first thing anyo
   const o = ORG, when = new Date().toLocaleDateString("en-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   OS().hidden = false; document.body.style.overflow = "hidden";
   OS().innerHTML = `<div class="osbox"><div class="eb">Site Safety Early Warning</div><h1>${esc(o.company)}</h1>${o.site ? `<p class="prj">${esc(o.site)}</p>` : ""}<p class="loc">${esc(orgLoc(o))}</p>
-    <p class="meta">${esc(when)} · ${esc(CA.types[o.type])} · ${esc(CA.jur[o.jur].law)}</p><button class="osbtn" id="osGo">Open today's forecast</button>${D.client ? "" : '<button class="oslink" id="osEd">Change details</button>'}</div>`;
+    <p class="meta">${esc(when)} · ${esc(CA.types[o.type])} · ${esc(CA.jur[o.jur].law)}</p><button class="osbtn" id="osGo">Start site scan</button>${D.client ? "" : '<button class="oslink" id="osEd">Change details</button>'}</div>`;
   $("#osGo").onclick = enterApp; const ed = $("#osEd"); if (ed) ed.onclick = () => openForm(); $("#osGo").focus();
 }
 function openForm() {
@@ -1011,7 +1032,7 @@ function openForm() {
     <p class="oserr" id="osE" role="alert"></p><button class="osbtn" type="submit">Save and continue</button> <button class="oslink" type="button" id="osX">${ORG ? "Cancel" : "Look around with a sample site"}</button></form>`;
   const city = () => { const j = $("#osJ").value; $("#osC").innerHTML = CA.jur[j].cities.map(c => `<option${c.name === o.city ? " selected" : ""}>${esc(c.name)}</option>`).join(""); };
   city(); $("#osJ").onchange = city;
-  $("#osX").onclick = () => { if (ORG && !entered) openShow(); else enterApp(); };
+  $("#osX").onclick = () => { if (ORG && !entered) openShow(); else if (entered) closeOpen(); else enterApp(); };
   $("#osF").onsubmit = e => { e.preventDefault(); const co = $("#osCo").value.trim(); if (!co) { $("#osE").textContent = "Enter the company name."; $("#osCo").focus(); return; }
     saveOrg(orgClean({ company: co, site: $("#osSi").value, address: $("#osAd").value, jur: $("#osJ").value, city: $("#osC").value, type: $("#osT").value, start: $("#osS").value })); };
   $("#osCo").focus();
@@ -1019,10 +1040,10 @@ function openForm() {
 function orgPersist() { try { localStorage.setItem(ORG_KEY, JSON.stringify(ORG)); } catch (_) {} if (orgDoc) orgDoc.set(ORG).catch(() => {}); }   // viewers who can't write the shared record keep it in this browser
 function saveOrg(o) {
   ORG = o; orgPersist(); if (o.start) setStart(o.start); const was = entered; entered = true;     // setSite fetches the forecast
-  setSite({ jur: o.jur, city: o.city, type: o.type }); entered = was; drawOrg(); entered = true; closeOpen(); show("live"); applyZones(); const fc = $("#fdCard"); if (fc) fc.scrollIntoView();
+  setSite({ jur: o.jur, city: o.city, type: o.type }); entered = was; drawOrg(); entered = true; closeOpen(); show("live"); applyZones(); runScan();
 }
 const closeOpen = () => { OS().hidden = true; OS().innerHTML = ""; document.body.style.overflow = ""; };
-function enterApp() { closeOpen(); const fc = $("#fdCard"); if (fc && ORG) fc.scrollIntoView(); if (!entered) { entered = true; loadForecast(false).then(() => { if (view === "proj") setView("proj"); }); } }
+function enterApp() { closeOpen(); entered = true; show("live"); runScan(); }
 async function orgConnect() {                            // the page's shared record, so every safety officer sees the same company
   if (D.client) return;
   try { const db = window.claude && await window.claude.use("db"); if (!db) return; orgDoc = db.doc("config/site");
@@ -1068,7 +1089,56 @@ function zoneEditor() {
   $("#fdEdit").hidden = false; $("#fdEd").hidden = true;
   $("#fdC").onclick = () => { $("#fdEdit").hidden = true; $("#fdEd").hidden = false; };
   $("#fdS").onclick = () => { const out = {}; ZIDS.forEach(z => { const n = document.querySelector(`[data-n="${z}"]`).value.trim(), p = +document.querySelector(`[data-p="${z}"]`).value; out[z] = { name: n && n !== ZDEF[z].name ? n : "", peak: Number.isFinite(p) ? Math.max(0, Math.min(500, Math.round(p))) : null, on: document.querySelector(`[data-o="${z}"]`).checked }; });
-    ORG.zones = out; orgPersist(); applyZones(); PROJ = null; $("#fdEdit").hidden = true; $("#fdEd").hidden = false; setView("proj"); };
+    ORG.zones = out; orgPersist(); applyZones(); PROJ = null; $("#fdEdit").hidden = true; $("#fdEd").hidden = false; setView("proj"); runScan(true); };
+}
+/* ================================================================== the site scan: reads what the system holds about this site, zone by zone */
+const SC_NAME = ["No warning signs", "Potential near-miss area", "Potential injury area"]; let scanRun = 0, scanFast = false, scanBusy = false;
+const scWait = ms => new Promise(r => setTimeout(r, scanFast || reduced ? 0 : ms));
+function scBuildMap() {
+  const svg = el("svg", { viewBox: "-2 -6 1004 668", role: "img", "aria-label": "Site plan with the ten numbered zones" }); el("rect", { x: -2, y: -6, width: 1004, height: 668, rx: 16, fill: "var(--site)" }, svg);
+  D.zones.forEach((z, k) => { el("polygon", { points: z.poly.map(([x, y]) => `${x * 10},${y * 10}`).join(" "), class: "scz", id: "scz-" + z.id }, svg);
+    const xs = z.poly.map(q => q[0]), ys = z.poly.map(q => q[1]), cx = (Math.min(...xs) + Math.max(...xs)) * 5, cy = (Math.min(...ys) + Math.max(...ys)) * 5; z.sc = [cx, cy];
+    const h = (Math.max(...ys) - Math.min(...ys)) * 10; el("text", { x: cx, y: cy + (h < 60 ? 9 : -2), class: "scnum" }, svg).textContent = k + 1; el("text", { x: cx, y: cy + 24, class: "scpc", id: "scp-" + z.id, ...(h < 60 ? { x: cx + 60, y: cy + 7 } : {}) }, svg); });
+  el("polyline", { id: "scRoute", class: "scroute", points: "" }, svg);
+  const g = el("g", { id: "scSweepG", class: "scsweep", style: "display:none" }, svg); el("path", { d: "M500,320 L1200,320 A700,700 0 0,0 1106,-30 Z", fill: "var(--signal)", opacity: .28 }, g); el("line", { x1: 500, y1: 320, x2: 1200, y2: 320, stroke: "var(--signal)", "stroke-width": 4 }, g);
+  $("#scMap").innerHTML = ""; $("#scMap").appendChild(svg);
+}
+function scStep(key, title, body, cls = "") { let li = document.getElementById("scs-" + key); if (!li) { li = document.createElement("li"); li.id = "scs-" + key; $("#scSteps").appendChild(li); } li.className = cls; li.innerHTML = `<b>${esc(title)}</b><span>${esc(body)}</span>`; }
+const scDist = (a, b, c, d) => { const r = Math.PI / 180, x = (d - b) * r * Math.cos((a + c) * r / 2); return Math.hypot(x, (c - a) * r) * 6371; };
+function scLocate() { return new Promise(res => { if (!navigator.geolocation) return res(null); let done = false; const end = v => { if (!done) { done = true; res(v); } }; setTimeout(() => end(null), 6000); try { navigator.geolocation.getCurrentPosition(p => end(p.coords), () => end(null), { timeout: 5000, maximumAge: 300000 }); } catch (_) { end(null); } }); }
+async function runScan(fast = false) {
+  if (!$("#scMap")) return; const run = ++scanRun; scanFast = fast; scanBusy = true; const alive = () => run === scanRun;
+  if (!$("#scMap svg")) scBuildMap(); $("#scSteps").innerHTML = ""; $("#scK").innerHTML = ""; $("#scTab").innerHTML = ""; $("#scN").textContent = ""; $("#scRoute").setAttribute("points", "");
+  D.zones.forEach(z => { $("#scz-" + z.id).setAttribute("class", "scz"); $("#scp-" + z.id).textContent = ""; });
+  $("#scGo").disabled = true; $("#scSkip").hidden = fast; $("#scSweepG").style.display = fast ? "none" : ""; if (!fast) $("#scanCard").scrollIntoView();
+  const who = ORG ? [ORG.company, ORG.site].filter(Boolean).join(" · ") : "Sample site"; $("#scT").textContent = `Site scan: ${who}`;
+  // 1 where
+  scStep("loc", "Finding the site", "Reading the saved location…", "run"); const where = ORG ? orgLoc(ORG) : `${SITE.city}, ${NMP[SITE.jur]}`; const c = cityOf(); let dev = null; if (!fast) dev = await scLocate(); if (!alive()) return;
+  scStep("loc", "Site location", dev ? `${where}. This device is about ${Math.round(scDist(dev.latitude, dev.longitude, c.lat, c.lon))} km from ${c.name}.` : `${where}, from the saved details. Device location isn't available here.`); await scWait(500);
+  // 2 weather
+  scStep("wx", "Reading the weather", "Fetching the forecast…", "run"); await loadForecast(false); if (!alive()) return; const W = WXD || { days: [] }, hits = W.days.slice(0, 5).filter(x => screens(x).length).length;
+  scStep("wx", "Weather", W.days.length ? `${W.live ? "Live" : "Saved"} forecast from ${W.src}. ${hits} of the next 5 days trigger a weather screen.` : "No current forecast: using the season's records.", W.days.length && W.live ? "" : "gap"); await scWait(500);
+  // 3 programme: today's work day, or the first day of a project not yet started
+  PROJ = null; const t = todayLocal(); setView("proj", isBiz(t) ? t : addBiz(t, 1)); const d = H.days[day], when = new Date(d + "T12:00").toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", year: "numeric" }); const crewNow = ZIDS.reduce((a, z) => a + (H.crew[z][day] || 0), 0), zonesNow = ZIDS.filter(z => H.risk[z][day]).length;
+  $("#scL").textContent = `${when} · ${phaseAt(d)}${d > t ? " · Project hasn't started, so this scans its first work day" : ""}`;
+  scStep("pl", "Programme", `${phaseAt(d)}. ${zonesNow} zones working, ${crewNow} workers planned. Generic programme: yours isn't loaded.`, "gap"); await scWait(500);
+  // 4 site records
+  const lo = Math.max(0, day - 19), logged = H.days.slice(lo, day + 1).filter(x => H.live.has(x)).length, ph = typeof phRes !== "undefined" && phRes && phRes.date === d ? phRes.res.photos.length : 0;
+  scStep("lg", "Site logs", logged ? `${logged} of the last ${day - lo + 1} work days logged; the rest use typical readings.` : `None logged in the last ${day - lo + 1} work days. Typical readings stand in.`, logged >= 10 ? "" : "gap"); await scWait(400);
+  scStep("ph", "Photos, cameras and sensors", ph ? `${ph} photos checked today. No cameras or sensors connected.` : "No photos today. No cameras or sensors connected, so nothing here can see the site.", "gap"); await scWait(400);
+  // 5 the ten zones, in plan order
+  const rows = []; let k = 0; for (const z of ZIDS) { k++; if (!alive()) return; const P = $("#scz-" + z), r = H.risk[z][day]; P.setAttribute("class", "scz now"); scStep("zn", `Scoring zone ${k} of ${ZIDS.length}`, zoneById[z].name, "run"); await scWait(380); if (!alive()) return;
+    const b = r ? r[1] : -1; P.setAttribute("class", "scz" + (b >= 0 ? " b" + b : "")); if (r) $("#scp-" + z).textContent = r[0] < .005 ? "<1%" : pct(r[0]); rows.push({ z, k, r, b }); }
+  const done = rows.filter(o => o.r), red = done.filter(o => o.b === 2), amb = done.filter(o => o.b === 1);
+  scStep("zn", "Ten zones scored", `${red.length} potential injury, ${amb.length} potential near miss, ${done.length - red.length - amb.length} no warning signs, ${rows.length - done.length} no work.`);
+  // the safety walk: from the gate, through flagged zones, riskiest first
+  const walk = done.filter(o => o.b > 0).sort((a, b) => b.r[0] - a.r[0]), start = zoneById.GTE.sc; $("#scRoute").setAttribute("points", walk.length ? [start, ...walk.map(o => zoneById[o.z].sc)].map(q => q.join(",")).join(" ") : ""); $("#scSweepG").style.display = "none";
+  const pc = p => p < .005 ? "<1%" : pct(p), inj = p => 1 - Math.pow(1 - p, INJ_SHARE), nm = p => 1 - Math.pow(1 - p, 1 - INJ_SHARE), conf = logged >= 10 ? "Partial" : logged ? "Low" : "Very low";
+  $("#scK").innerHTML = [["Potential injury areas", red.length, "highest alert: act before the shift"], ["Potential near-miss areas", amb.length, "extra controls today"], ["No warning signs", done.length - red.length - amb.length, "normal controls still apply"], ["Scan confidence", conf, logged ? `${logged} days of real logs` : "no real site records yet"]].map(([a, v, n], j) => `<div class="tile"><div class="k">${a}</div><div class="v${j === 3 ? " sig" : ""}" style="font-size:28px">${v}</div><div class="n">${n}</div></div>`).join("");
+  $("#scTab").innerHTML = "<tr><th class='r'>No.</th><th>Zone</th><th>Result</th><th class='r'>Walk order</th><th class='r'>Workers</th><th class='r'>Injury, 5 days</th><th class='r'>Near miss, 5 days</th><th>Most likely</th><th>Why</th><th>First control</th></tr>" + rows.map(o => { const zn = esc(zoneById[o.z].name), w = walk.indexOf(o) + 1; if (!o.r) { const nx = H.crew[o.z].findIndex((v, i) => i > day && v > 0); return `<tr><td class="r">${o.k}</td><td><b>${zn}</b></td><td><span class="sct n">No work</span></td><td class="r"></td><td class="r">0</td><td class="r">–</td><td class="r">–</td><td colspan="3" class="note">${nx < 0 ? "No more work planned" : "Work starts " + new Date(H.days[nx] + "T12:00").toLocaleDateString("en-CA", { month: "short", year: "numeric" })}</td></tr>`; }
+    const dr = o.r[2].map(i => D.drivers[i]), ct = dr.length && D.actions[dr[0]] ? D.actions[dr[0]] : D.zone_rule[o.z]; return `<tr><td class="r">${o.k}</td><td><b>${zn}</b></td><td><span class="sct b${o.b}">${SC_NAME[o.b]}</span></td><td class="r">${w || ""}</td><td class="r">${H.crew[o.z][day] || 0}</td><td class="r">${pc(inj(o.r[0]))}</td><td class="r">${pc(nm(o.r[0]))}</td><td>${esc(likelyEvents(o.z))}</td><td>${esc(dr.join(", ") || "Crew size only")}</td><td>${esc(ct.action.split(";")[0])}<span class="ref" style="display:block;font-size:12px;color:var(--muted)">${esc(ct.ref[PROV] || "")}</span></td></tr>`; }).join("");
+  $("#scN").textContent = `This scan reads the records the system holds; it can't see the site. Colours show relative risk from the programme, weather and any logs, not incidents that have been detected or will happen. "No warning signs" doesn't mean no incident: in testing on simulated logs, ${pct(1 - M.warned_share)} of events had no warning. The model can't tell in advance whether an event will be an injury or a near miss, so those two chances assume a quarter of events are injuries. The zone model is trained on simulated logs.`;
+  $("#scGo").disabled = false; $("#scSkip").hidden = true; scanBusy = false; render();
 }
 function ticker(i) {
   const items = [];
@@ -2829,6 +2899,7 @@ addEventListener("hashchange", () => show((location.hash || "#live").slice(1)));
 connectFeed(); connectControls(); connectReports();
 drawOrg(); if (D.client) ["#sbJ", "#sbC", "#sbT"].forEach(id => $(id).disabled = true);
 if (ORG) openShow(); else { OS().hidden = false; document.body.style.overflow = "hidden"; setTimeout(() => { if (!ORG && !entered) openForm(); }, 700); }
-orgConnect(); applyZones(); $("#fdEd").onclick = zoneEditor; fiveDay();
+orgConnect(); applyZones(); $("#fdEd").onclick = zoneEditor; fiveDay(); scBuildMap();
+$("#scGo").onclick = () => runScan(); $("#scSkip").onclick = () => { scanFast = true; };
 $("#bLang").innerHTML = Object.entries(LANGS).map(([k, L]) => `<option value="${k}">${L.name}</option>`).join("");
 </script>
