@@ -9,3 +9,6 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# One company's details, for its own copy of the page
+client.json

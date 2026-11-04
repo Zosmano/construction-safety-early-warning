@@ -67,6 +67,8 @@ def payload(fl, events, wx, crew, summary, narratives, th, test_events, model, l
                     "snow": w.snow_or_ice.fillna(False).astype(bool).tolist(), "chill": w.chill_min.round(1).tolist()},
         "triggers": {"gust": C.CRANE_GUST_KMH, "humidex": C.HUMIDEX_HEAT, "wet": C.WET_HOURS, "freeze": C.FREEZE_C, "cold": C.COLD_CHILL_C},
         "ca": ca,
+        # a copy built for one company: client.json holds company, site, address, jur, city, type, start
+        "client": json.loads((C.ROOT / "client.json").read_text(encoding="utf-8")) if (C.ROOT / "client.json").exists() else None,
         # every calendar day of real Vancouver shift weather, 2023-2025: the seasonal outlook for any future date
         "climate": {"dates": [d.strftime("%Y-%m-%d") for d in wx.index], "gust": wx.gust_est.round(1).tolist(),
                     "humidex": wx.humidex_max.round(1).tolist(), "rain": wx.rain_hours.fillna(0).astype(int).tolist(),

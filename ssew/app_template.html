@@ -180,6 +180,20 @@ table.form td{padding:4px 6px}
 .status:empty{display:none}
 .status.ok{border-color:var(--green)} .status.warn{border-color:var(--amber)}
 .prose{max-width:84ch} .prose p,.prose li{color:var(--ink2)} .prose h3{margin-top:20px;font-size:17px}
+.openscr[hidden]{display:none}
+.openscr{position:fixed;inset:0;z-index:50;background:var(--navy);color:var(--navy-ink);overflow:auto;display:flex;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+.osbox{margin:auto;width:100%;max-width:640px;padding-block:24px}
+.osbox .eb{font:700 12px var(--f-head);letter-spacing:.12em;text-transform:uppercase;color:var(--navy-muted)}
+.osbox h1{font:800 clamp(34px,8vw,58px)/1.05 var(--f-head);margin:10px 0 8px;color:var(--navy-ink);text-wrap:balance;overflow-wrap:anywhere}
+.osbox .prj{font:700 21px/1.25 var(--f-head);margin:0 0 6px;overflow-wrap:anywhere}.osbox .loc{font-size:18px;margin:0;overflow-wrap:anywhere}
+.osbox .meta{margin:18px 0 24px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--navy-ink) 25%,transparent);font-size:14px;color:var(--navy-muted)}
+.osbtn{font:700 15px var(--f-head);background:var(--signal);color:#fff;border:0;border-radius:10px;padding:13px 20px;cursor:pointer}
+.oslink{font:inherit;font-size:14px;background:none;border:0;color:var(--navy-ink);text-decoration:underline;cursor:pointer;padding:10px}
+.osf{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:18px 0}
+.osf label{display:grid;gap:4px;font-size:13.5px;color:var(--navy-muted);min-width:0}.osf .w{grid-column:1/-1}
+.osf input,.osf select{font:inherit;font-size:15px;width:100%;box-sizing:border-box;color:#13233a;background:#fff;border:1px solid transparent;border-radius:8px;padding:9px 10px}
+.oserr{color:#ffb4a8;font-size:14px;min-height:1.3em;margin:0}
+.orgline{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding-block:10px 0;font-size:15px}.orgline b{font:800 18px var(--f-head);overflow-wrap:anywhere}.orgline span{color:var(--muted);min-width:0;overflow-wrap:anywhere}.orgline button{font:inherit;font-size:13px;background:none;border:0;color:var(--ink);text-decoration:underline;cursor:pointer;padding:0}
 .sitebar{background:var(--plane);border-bottom:1px solid var(--border)}
 .sb{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding-block:10px;font-size:13.5px}
 .sb label{display:flex;gap:6px;align-items:center;color:var(--muted)}
@@ -203,6 +217,7 @@ footer .wrap{padding-block:20px 30px}
 footer b{color:var(--navy-ink)}
 </style>
 
+<div id="openScr" class="openscr" role="dialog" aria-modal="true" aria-label="Your company and site"></div>
 <header>
   <div class="wrap cover">
     <div>
@@ -216,7 +231,7 @@ footer b{color:var(--navy-ink)}
   </div>
   <div class="ticker" aria-label="Early warning signs on the featured day"><div class="lab"><i></i>Early warning signs</div><div class="run" id="ticker"></div></div>
 </header>
-<div class="sitebar" aria-label="Your site"><div class="wrap sb">
+<div class="sitebar" aria-label="Your site"><div class="wrap orgline" id="orgLine"></div><div class="wrap sb">
   <b>Your site</b>
   <label>Province or territory <select id="sbJ"></select></label>
   <label>City <select id="sbC"></select></label>
@@ -792,7 +807,7 @@ function buildProjection() {
 const projIdx = d => { const P = PROJ; let i = P.days.findIndex(q => q >= d); return i < 0 ? P.days.length - 1 : Math.max(20, i); };
 function setView(v, date) {                             // switch the live tab between history and the projection
   if (timer) play();
-  view = v; $("#viewNote").textContent = v === "proj" ? `Your project in ${SITE.city}, ${NMP[SITE.jur]}, from ${PROJECT_START}: forecast from the programme, the season and any live forecast, with typical readings for each zone. Days logged in the live feed replace the typical readings.` : "Recorded history: the simulated featured site in Burnaby, BC, over 30 months, with its injuries and near misses.";
+  view = v; $("#viewNote").textContent = v === "proj" ? `${ORG ? ORG.company + ": project" : "Your project"} in ${SITE.city}, ${NMP[SITE.jur]}, from ${PROJECT_START}: forecast from the programme, the season and any live forecast, with typical readings for each zone. Days logged in the live feed replace the typical readings.` : "Recorded history: the simulated featured site in Burnaby, BC, over 30 months, with its injuries and near misses.";
   if (v === "up" && !UP) v = view = "proj";
   if (v === "proj") { if (!PROJ) PROJ = buildProjection(); H = PROJ; const t = date || todayLocal(); day = projIdx(t < PROJ.days[20] ? PROJ.days[20] : t); }
   else if (v === "up") { H = UP; const i = date ? UP.days.findIndex(d => d >= date) : -1; day = i < 0 ? UP.days.length - 1 : i;
@@ -828,7 +843,9 @@ function drawSiteBar() {
   $("#sbN").textContent = `${J.rate.toFixed(2)} claims per 100 workers. Law: ${J.law}. Board: ${J.board}.${q} Seasonal weather: real 2023–2025 records.`;
 }
 function setSite(s) {
-  Object.assign(SITE, s); try { localStorage.setItem("ssew.site", JSON.stringify(SITE)); } catch (_) {}
+  if (D.client) return;                                  // a copy built for one company stays on its site
+  Object.assign(SITE, s); if (ORG) { if (ORG.city !== SITE.city) ORG.address = ""; ORG.jur = SITE.jur; ORG.city = SITE.city; ORG.type = SITE.type; orgPersist(); drawOrg(); }
+  try { localStorage.setItem("ssew.site", JSON.stringify(SITE)); } catch (_) {}
   LFC = {}; loadClimate(); PROJ = null; drawSiteBar(); cover();
   ["uProv", "phProv"].forEach(id => { const e = document.getElementById(id); if (e) e.value = SITE.jur; });
   PM.prov = SITE.jur; if (drawn.premium) { pmForm(); pmRender(); }
@@ -940,6 +957,64 @@ DRAW_LATE.inspect = () => {
     $("#iNote").textContent = `An investigation is a proxy: it can follow a complaint, work refusal, critical injury or other event. Inspectors choose where they go, so this describes inspected workplaces. Trained in Ontario${SITE.jur === "ON" ? "" : `, so it is only indicative in ${NMP[SITE.jur]}`}. It doesn't replace a competent person's judgment.`; };
   document.querySelectorAll("#inspect input[data-f]").forEach(e => e.oninput = run); iRun = run; run();
 };
+/* ================================================================== who this page is for: shown first, before any forecast.
+   Order of trust: a copy built for one company (client.json) > the page's shared record > this browser. */
+const ORG_KEY = "ssew.org", OS = () => $("#openScr"); let ORG = null, orgDoc = null, entered = false;
+function orgClean(o) {
+  if (!o || typeof o.company !== "string" || !o.company.trim()) return null; const j = CA.jur[o.jur] ? o.jur : SITE.jur, cs = CA.jur[j].cities, c = cs.find(x => x.name === o.city) || cs[0], s = v => typeof v === "string" ? v.trim().slice(0, 160) : "";
+  return { company: s(o.company), site: s(o.site), address: s(o.address), jur: j, city: c.name, type: CA.types[o.type] ? o.type : c.type, start: /^\d{4}-\d{2}-\d{2}$/.test(o.start || "") ? o.start : "" };
+}
+try { ORG = orgClean(D.client) || orgClean(JSON.parse(localStorage.getItem(ORG_KEY) || "null")); } catch (_) { ORG = orgClean(D.client); }
+if (ORG) { SITE.jur = ORG.jur; SITE.city = ORG.city; SITE.type = ORG.type; if (ORG.start) PROJECT_START = ORG.start; }
+const orgLoc = o => [o.address, o.city, NMP[o.jur]].filter(Boolean).join(", ");
+const siteLabel = () => ORG ? [ORG.company, ORG.site, orgLoc(ORG)].filter(Boolean).join(" · ") : D.site;
+function drawOrg() {
+  const e = $("#orgLine"); if (!e) return;
+  if (ORG) { e.innerHTML = `<b>${esc(ORG.company)}</b><span>${esc([ORG.site, orgLoc(ORG)].filter(Boolean).join(" · "))}</span>${D.client ? "" : '<button id="orgEd">Change details</button>'}`; document.title = `${ORG.company} · Site Safety Early Warning`; }
+  else { e.innerHTML = '<b>Sample site</b><span>No company set up yet.</span><button id="orgEd">Set up your company</button>'; document.title = "Site Safety Early Warning"; }
+  const b = $("#orgEd"); if (b) b.onclick = () => openForm();
+}
+function openShow() {                                    // the first thing anyone sees: whose site this is
+  const o = ORG, when = new Date().toLocaleDateString("en-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  OS().hidden = false; document.body.style.overflow = "hidden";
+  OS().innerHTML = `<div class="osbox"><div class="eb">Site Safety Early Warning</div><h1>${esc(o.company)}</h1>${o.site ? `<p class="prj">${esc(o.site)}</p>` : ""}<p class="loc">${esc(orgLoc(o))}</p>
+    <p class="meta">${esc(when)} · ${esc(CA.types[o.type])} · ${esc(CA.jur[o.jur].law)}</p><button class="osbtn" id="osGo">Open today's forecast</button>${D.client ? "" : '<button class="oslink" id="osEd">Change details</button>'}</div>`;
+  $("#osGo").onclick = enterApp; const ed = $("#osEd"); if (ed) ed.onclick = () => openForm(); $("#osGo").focus();
+}
+function openForm() {
+  const o = ORG || { jur: SITE.jur, city: SITE.city, type: SITE.type, start: PROJECT_START };
+  OS().hidden = false; document.body.style.overflow = "hidden";
+  OS().innerHTML = `<form class="osbox" id="osF" novalidate><div class="eb">Site Safety Early Warning</div><h1 style="font-size:clamp(28px,6vw,42px)">Set up your company</h1>
+    <p class="loc" style="font-size:15px">Safety officers will see this first whenever they open the page.</p><div class="osf">
+    <label class="w">Company name <input id="osCo" required maxlength="120" autocomplete="organization" value="${esc(o.company || "")}"></label>
+    <label class="w">Project or site name <input id="osSi" maxlength="120" value="${esc(o.site || "")}"></label>
+    <label class="w">Site address <input id="osAd" maxlength="160" autocomplete="off" value="${esc(o.address || "")}"></label>
+    <label>Province or territory <select id="osJ">${CA.order.map(k => `<option value="${k}"${k === o.jur ? " selected" : ""}>${esc(NMP[k])}</option>`).join("")}</select></label>
+    <label>Nearest city, for weather <select id="osC"></select></label>
+    <label>Project type <select id="osT">${Object.entries(CA.types).map(([k, n]) => `<option value="${k}"${k === o.type ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+    <label>Project start <input id="osS" type="date" value="${esc(o.start || PROJECT_START)}"></label></div>
+    <p class="oserr" id="osE" role="alert"></p><button class="osbtn" type="submit">Save and continue</button> <button class="oslink" type="button" id="osX">${ORG ? "Cancel" : "Look around with a sample site"}</button></form>`;
+  const city = () => { const j = $("#osJ").value; $("#osC").innerHTML = CA.jur[j].cities.map(c => `<option${c.name === o.city ? " selected" : ""}>${esc(c.name)}</option>`).join(""); };
+  city(); $("#osJ").onchange = city;
+  $("#osX").onclick = () => { if (ORG && !entered) openShow(); else enterApp(); };
+  $("#osF").onsubmit = e => { e.preventDefault(); const co = $("#osCo").value.trim(); if (!co) { $("#osE").textContent = "Enter the company name."; $("#osCo").focus(); return; }
+    saveOrg(orgClean({ company: co, site: $("#osSi").value, address: $("#osAd").value, jur: $("#osJ").value, city: $("#osC").value, type: $("#osT").value, start: $("#osS").value })); };
+  $("#osCo").focus();
+}
+function orgPersist() { try { localStorage.setItem(ORG_KEY, JSON.stringify(ORG)); } catch (_) {} if (orgDoc) orgDoc.set(ORG).catch(() => {}); }   // viewers who can't write the shared record keep it in this browser
+function saveOrg(o) {
+  ORG = o; orgPersist(); if (o.start) setStart(o.start); const was = entered; entered = true;     // setSite fetches the forecast
+  setSite({ jur: o.jur, city: o.city, type: o.type }); entered = was; drawOrg(); entered = true; closeOpen(); show("live");
+}
+const closeOpen = () => { OS().hidden = true; OS().innerHTML = ""; document.body.style.overflow = ""; };
+function enterApp() { closeOpen(); if (!entered) { entered = true; loadForecast(false).then(() => { if (view === "proj") setView("proj"); }); } }
+async function orgConnect() {                            // the page's shared record, so every safety officer sees the same company
+  if (D.client) return;
+  try { const db = window.claude && await window.claude.use("db"); if (!db) return; orgDoc = db.doc("config/site");
+    orgDoc.onSnapshot(sn => { const v = orgClean(sn && sn.data && sn.data()); if (!v || JSON.stringify(v) === JSON.stringify(ORG)) return; ORG = v;
+      try { localStorage.setItem(ORG_KEY, JSON.stringify(ORG)); } catch (_) {} if (!entered) { SITE.jur = v.jur; SITE.city = v.city; SITE.type = v.type; loadClimate(); PROJ = null; drawSiteBar(); openShow(); } else setSite({ jur: v.jur, city: v.city, type: v.type }); drawOrg(); }, () => {});
+  } catch (_) {}
+}
 function ticker(i) {
   const items = [];
   ZIDS.forEach(z => { const r = H.risk[z][i]; if (!r || r[1] === 0) return;
@@ -1658,7 +1733,7 @@ body{font:14px/1.45 system-ui,Segoe UI,Arial,sans-serif;color:#13233a;margin:24p
 table{border-collapse:collapse;width:100%}td,th{border:1px solid #c9d2de;padding:8px;vertical-align:top;text-align:left}th{background:#eef2f7}ul{margin:0;padding-left:18px}
 .top{border-bottom:6px solid #ff5f15;padding-bottom:10px;margin-bottom:12px}.sign td{height:42px}small,i{color:#4c5b70}.foot{margin-top:22px;font-size:12px;color:#4c5b70}
 @media print{body{margin:10mm}}</style></head><body>
-<div class="top"><h1>${esc(t("Pre-shift safety briefing"))} · ${esc(when)}</h1><div>${esc(H.upload ? H.name : D.site)}${H.upload ? "" : " · " + esc(phaseAt(d))} · ${esc(kind)}</div></div>
+<div class="top"><h1>${esc(t("Pre-shift safety briefing"))} · ${esc(when)}</h1><div>${esc(H.upload ? H.name : siteLabel())}${H.upload ? "" : " · " + esc(phaseAt(d))} · ${esc(kind)}</div></div>
 <h2>${esc(t("Weather screens"))}</h2><table><tr>${wx}</tr></table>
 <h2>${esc(t("Zones: risk of an injury or high-potential near miss in the next 5 work days"))}</h2>
 <table><tr><th>${esc(t("Zone"))}</th><th>${esc(t("Band"))}</th><th>${esc(t("Warning signs"))}</th><th>${esc(t("Controls before the shift (☑ = applied on the dashboard)"))}</th></tr>${zoneRows || `<tr><td colspan="4">${esc(t("No zones working."))}</td></tr>`}</table>
@@ -2215,7 +2290,7 @@ DRAW.ahead = () => {
   $("#laTpl").onclick = () => offerFile("look-ahead-template.csv", laCsvText() || toCsv([["activity", "zone", "start", "end", "crew", "type", "lift_over"]]), "text/csv", $("#laStatus"));
   $("#laCsv").onclick = () => offerFile(`look-ahead-${laDays()[0]}-revised.csv`, laCsvText(), "text/csv", $("#laStatus"));
   $("#laBrief").onclick = () => { const r = LA.res; if (!r) return; offerFile(`look-ahead-briefing-${r.days[0]}.html`, `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Look-ahead ${r.days[0]}</title><style>body{font:14px/1.45 system-ui,Segoe UI,Arial,sans-serif;color:#13233a;margin:24px;max-width:1000px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #c9d2de;padding:6px;text-align:left;vertical-align:top}th{background:#eef2f7}h1{border-bottom:6px solid #ff5f15;padding-bottom:8px}</style></head><body>
-    <h1>Look-ahead safety check · ${sday(r.days[0])} to ${sday(r.days[r.days.length - 1])}</h1><p>${esc(D.site)} · ${NMP[PROV]} · ${r.cl.length} clashes (${r.cl.filter(c => c.sev === 2).length} high)</p>
+    <h1>Look-ahead safety check · ${sday(r.days[0])} to ${sday(r.days[r.days.length - 1])}</h1><p>${esc(siteLabel())} · ${NMP[PROV]} · ${r.cl.length} clashes (${r.cl.filter(c => c.sev === 2).length} high)</p>
     <table><tr><th>Day</th><th>Clash</th><th>Activity</th><th>Why</th><th>Control if it goes ahead</th><th>Agreed action</th></tr>${r.cl.map(c => { const k = laCtl(c);
       return `<tr><td>${sday(c.d)}</td><td>${c.sev === 2 ? "<b>High</b>" : "Medium"} · ${esc(c.k)}</td><td>${esc(c.a.name)} (${esc(zoneById[c.a.zone].name)})</td><td>${esc(c.why)}</td><td>${k ? esc(k.action) + "<br><i>" + esc(k.ref) + "</i>" : ""}</td><td></td></tr>`; }).join("") || '<tr><td colspan="6">No clashes.</td></tr>'}</table>
     ${LA.log.length ? `<p><b>Plan changes already made:</b> ${LA.log.map(esc).join("; ")}.</p>` : ""}<p style="font-size:12px;color:#4c5b70">Weather: entered forecast where given, otherwise the seasonal average. Independent prototype by Osman Zakaria, PMP; it supports, and never replaces, the site's safety program and the law.</p></body></html>`, "text/html", $("#laStatus")); };
@@ -2694,6 +2769,8 @@ setView("proj");                                         // open on the viewer's
 show((location.hash || "#live").slice(1));
 addEventListener("hashchange", () => show((location.hash || "#live").slice(1)));
 connectFeed(); connectControls(); connectReports();
-loadForecast(false).then(() => { if (view === "proj") setView("proj"); });
+drawOrg(); if (D.client) ["#sbJ", "#sbC", "#sbT"].forEach(id => $(id).disabled = true);
+if (ORG) openShow(); else { OS().hidden = false; document.body.style.overflow = "hidden"; setTimeout(() => { if (!ORG && !entered) openForm(); }, 700); }
+orgConnect();
 $("#bLang").innerHTML = Object.entries(LANGS).map(([k, L]) => `<option value="${k}">${L.name}</option>`).join("");
 </script>
