@@ -165,7 +165,7 @@ input[type=number]{width:5.2em}
 .ctrl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;margin-top:7px;font-size:13.5px}
 .ctrl button{font:700 11px var(--f-head);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--axis);background:var(--surface);color:var(--ink);border-radius:7px;padding:5px 7px;cursor:pointer;white-space:nowrap}
 .ctrl button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
-.ctrl .ref{display:block;font-size:12px;color:var(--muted)}
+.ctrl .ref{display:block;font-size:12px;color:var(--muted)}.refsum{display:block;font-size:12px;font-weight:400;font-style:normal;color:var(--muted);margin-top:1px}
 .chart svg{display:block;width:100%;height:auto;overflow:visible}
 .chart text{font:12px var(--f-body);fill:var(--muted)}
 .gl{stroke:var(--grid)} .ax{stroke:var(--axis)}
@@ -616,7 +616,7 @@ footer b{color:var(--navy-ink)}
     <p class="note" style="margin-top:0">One shared cut-off would under-flag low-rate places and over-alert high-rate ones. Each jurisdiction alerts at its own top 5% (red) and next 15% (amber) of zone-days in the last six months before the test, plus the wind and cold rules. Test-period alert shares run higher because the later, busier phases carry more risk.</p>
     <div class="scroll"><table class="t" id="pth"></table></div></div>
   <div class="card" style="margin-top:16px"><h3>Sites in the model (test period)</h3><div class="scroll"><table class="t" id="ptab"></table></div></div>
-  <div class="card" style="margin-top:16px"><h3>The same control, cited for your jurisdiction and two others</h3><div class="scroll"><table class="t" id="lawtab"></table></div><h3 style="margin-top:16px">Read the law</h3><div class="scroll"><table class="t" id="lawlinks"></table></div><p class="note">Nunavut's published consolidation doesn't yet include its 2025 amendments, and Yukon's part pages are the board's unofficial copies, so check the official version too.</p>
+  <div class="card" style="margin-top:16px"><h3>The same control, cited for your jurisdiction and two others</h3><div class="scroll"><table class="t" id="lawtab"></table></div><h3 style="margin-top:16px">Read the law</h3><div class="scroll"><table class="t" id="lawlinks"></table></div><p class="note">Each citation names the exact section we read in the official text. The line under it is our own plain summary, not the wording of the law and not legal advice: open the link and find the section number to read the exact words. Where we haven't confirmed a section, the citation names the law and topic only. Nunavut's published consolidation doesn't yet include its 2025 amendments, and Yukon's part pages are the board's unofficial copies, so check the official version too.</p>
     <p class="note">References point the site's competent person to the governing provision. Each citation links to the official text. BC, Ontario, Alberta and Yukon name parts or regulations more exactly; the others link to the whole instrument, where you search for the topic. I checked that topics appear in most of these texts by keyword, and no lawyer has reviewed them. Always check the current text.</p></div>
 </section>
 
@@ -2308,7 +2308,7 @@ const PHCAT = {                                         // finding category -> w
   "Excavation": { z: "EXC" }, "Scaffold": { z: "SCF" }, "Crane and lifting": { z: "CRN" }, "Traffic and mobile equipment": { z: "GTE" },
   "Material storage and handling": { z: "LAY" }, "Electrical": { z: "MEP" }, "Fire and hot work": { g: "Permit issues" }, "Other": { g: "Hazard observations" } };
 const SEVC = { high: "var(--red)", medium: "var(--amber)", low: "var(--blue)" };
-const refA = (text, j) => { const u = D.ref_links[j] && D.ref_links[j][text]; return u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text || ""); };
+const refA = (text, j) => { const u = D.ref_links[j] && D.ref_links[j][text]; const s = D.ref_sum && D.ref_sum[j] && D.ref_sum[j][text]; return (u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text || "")) + (s ? ` <span class="refsum">${esc(s)}</span>` : ""); };
 const phCtl = (cat, prov) => { const m = PHCAT[cat] || PHCAT.Other, c = m.g ? D.actions[m.g] : D.zone_rule[m.z]; return { action: c.action, ref: c.ref[prov] }; };
 let phFiles = [], phRes = null, phSample = null, phLimits = null, phAbort = null;
 function phPrompt(n, zone) {

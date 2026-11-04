@@ -1,10 +1,10 @@
-﻿"""Turn a flagged zone into immediate, specific controls: what to do before the next shift, tied to the driver
+"""Turn a flagged zone into immediate, specific controls: what to do before the next shift, tied to the driver
 behind the alert and to the legislation that governs it in the site's province.
 
     BC  Occupational Health and Safety Regulation (OHSR); Workers Compensation Act
     ON  Occupational Health and Safety Act (OHSA); O. Reg. 213/91 Construction Projects; O. Reg. 297/13; O. Reg. 490/09
     AB  Occupational Health and Safety Act; OHS Code
-    The other 10: see LAWS below. Their references name the instrument and the topic, not a section number.
+    The other 10: see LAWS below. citations.py gives the exact section, heading and a plain summary wherever one has been checked; other controls keep the instrument and topic.
 
 References point the site's competent person to the governing provision; always check the current text."""
 
@@ -72,6 +72,7 @@ ZONE_RULE = {  # the zone's standing control, added to every alert there
 }
 
 import re
+from . import citations
 
 # name of the act and the main regulation for the other 10 jurisdictions
 LAWS = {
@@ -140,8 +141,21 @@ LINKS = {  # act, main regulation, further instruments as (name, url)
 }
 
 
+# exact sections replace the topic citation wherever one has been read and checked
+REF_URL, REF_SUM = {j: {} for j in LINKS}, {j: {} for j in LINKS}
+for table in (ACTIONS, ZONE_RULE):
+    for key, (_, refs) in table.items():
+        for j in LINKS:
+            c = citations.cite(j, key)
+            if c:
+                refs[j], REF_URL[j][c[0]] = c[0], c[1]
+                REF_SUM[j][c[0]] = c[2]
+
+
 def ref_url(j, ref):
     """The official text behind a citation."""
+    if ref in REF_URL[j]:
+        return REF_URL[j][ref]
     L = LINKS[j]
     if j == "BC":
         m = re.search(r"Parts? (\d+)", ref)
