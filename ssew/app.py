@@ -58,7 +58,7 @@ def payload(fl, events, wx, crew, summary, narratives, th, test_events, model, l
         "risk": risk, "drivers": drivers, "weather_zones": WEATHER_ZONES,
         "actions": {k: {"action": v[0], "ref": v[1]} for k, v in alerts.ACTIONS.items()},
         "zone_rule": {k: {"action": v[0], "ref": v[1]} for k, v in alerts.ZONE_RULE.items()},
-        "law": alerts.LAW,
+        "law": alerts.LAW, "ref_links": alerts.ref_links(), "law_links": alerts.LINKS,
         "crew": {z: crew[z].reindex(pd.DatetimeIndex(days)).fillna(0).astype(int).tolist() for z in crew.columns},
         "logs": raw,
         "weather": {"gust": w.gust_est.round(2).tolist(), "humidex": w.humidex_max.round(2).tolist(),

@@ -71,6 +71,8 @@ ZONE_RULE = {  # the zone's standing control, added to every alert there
             {"BC": "OHSR Part 4: ergonomics", "ON": "OHSA s.25(2)(h): musculoskeletal disorder prevention", "AB": "OHS Code Part 14: lifting and handling loads"}),
 }
 
+import re
+
 # name of the act and the main regulation for the other 10 jurisdictions
 LAWS = {
     "QC": ("Act respecting occupational health and safety", "Safety Code for the construction industry", "Quebec AOHS and Safety Code for the construction industry"),
@@ -96,14 +98,68 @@ TOPICS = {
     "Crew exposure": ("act", "supervisor duties"),
     "EXC": ("reg", "excavations and trenches"), "CRN": ("reg", "cranes, hoists and rigging"), "FRM": ("reg", "formwork and concrete"),
     "DCK": ("reg", "fall protection and guardrails"), "SCF": ("reg", "scaffolds and work platforms"), "ROF": ("reg", "fall protection"),
-    "MEP": ("reg", "electrical safety, lockout and hot work"), "INT": ("reg", "silica and dust exposure"), "GTE": ("reg", "traffic control and mobile equipment"),
+    "MEP": ("reg", "electrical safety, lockout and hot work"), "INT": ("reg", "harmful dust and substances, including silica"), "GTE": ("reg", "traffic control and mobile equipment"),
     "LAY": ("reg", "manual handling and material storage"),
 }
+# Nova Scotia splits these topics across three regulations; the Workplace Health and Safety Regulations hold fall protection and scaffolds
+NS_GENERAL = {"EXC", "CRN", "FRM", "MEP", "LAY", "Wind forecast", "Permit issues", "PPE non-compliance", "Housekeeping"}
+# Yukon publishes its regulations by part, so citations can name the part
+YT_PART = {"PPE non-compliance": 1, "Housekeeping": 1, "Permit issues": 10, "Wind forecast": 5, "Rain and ice forecast": 1, "EXC": 10, "CRN": 5, "FRM": 10, "DCK": 1, "SCF": 10, "ROF": 1, "MEP": 9, "GTE": 6, "LAY": 8}
 for table in (ACTIONS, ZONE_RULE):
     for key, (_, refs) in table.items():
         kind, topic = TOPICS[key]
         for j, (act, reg, _) in LAWS.items():
             refs[j] = f"{act if kind == 'act' else reg}: {topic}"
+        if key in NS_GENERAL:
+            refs["NS"] = f"Occupational Safety General Regulations: {topic}"
+        if key == "INT":
+            refs["NS"] = f"Occupational Health Regulations: {topic}"
+            refs["YT"] = f"Workplace Health Regulations: {topic}"
+        if key in YT_PART:
+            refs["YT"] = f"Occupational Health and Safety Regulations Part {YT_PART[key]}: {topic}"
+
+# official texts, each opened and checked (November 2026)
+WSBC = "https://www.worksafebc.com/en/law-policy/occupational-health-safety/searchable-ohs-regulation/"
+BC_PARTS = {3: "part-03-rights-and-responsibilities", 4: "part-04-general-conditions", 6: "part-06-substance-specific-requirements", 7: "part-07-noise-vibration-radiation-and-temperature", 8: "part-08-personal-protective-clothing-and-equipment",
+            11: "part-11-fall-protection", 12: "part-12-tools-machinery-and-equipment", 13: "part-13-ladders-scaffolds-and-temporary-work-platforms", 14: "part-14-cranes-and-hoists", 18: "part-18-traffic-control", 19: "part-19-electrical-safety", 20: "part-20-construction-excavation-and-demolition"}
+YT_URL = {1: "part-1-general", 5: "part-5-cranes-hoisting-and-lifting", 6: "part-6-mobile-equipment", 8: "part-8-material-and-storage", 9: "part-9-electrical-safety", 10: "part-10-construction-and-building-safety"}
+LINKS = {  # act, main regulation, further instruments as (name, url)
+    "BC": [("Workers Compensation Act", WSBC + "workers-compensation-act"), ("OHS Regulation", WSBC + "ohs-regulation/part-03-rights-and-responsibilities")],
+    "AB": [("OHS Act", "https://open.alberta.ca/publications/o02p2"), ("OHS Code", "https://kings-printer.alberta.ca/documents/OHS/OHSCode.pdf")],
+    "SK": [("Saskatchewan Employment Act", "https://publications.saskatchewan.ca//api/v1/products/70351/formats/78194/download"), ("OHS Regulations, 2020", "https://publications.saskatchewan.ca/api/v1/products/112399/formats/126367/download")],
+    "MB": [("Workplace Safety and Health Act", "https://web2.gov.mb.ca/laws/statutes/ccsm/w210.php"), ("Regulation M.R. 217/2006", "https://web2.gov.mb.ca/laws/regs/current/_pdf-regs.php?reg=217/2006")],
+    "ON": [("OHSA", "https://www.ontario.ca/laws/statute/90o01"), ("O. Reg. 213/91, construction projects", "https://www.ontario.ca/laws/regulation/910213"), ("O. Reg. 297/13, training", "https://www.ontario.ca/laws/regulation/130297"), ("O. Reg. 490/09, designated substances", "https://www.ontario.ca/laws/regulation/090490")],
+    "QC": [("Act respecting occupational health and safety", "https://www.legisquebec.gouv.qc.ca/en/document/cs/S-2.1"), ("Safety Code for the construction industry", "https://www.legisquebec.gouv.qc.ca/en/document/cr/S-2.1,%20r.%204")],
+    "NB": [("OHS Act", "https://laws.gnb.ca/en/document/cs/O-0.2"), ("General Regulation 91-191", "https://laws.gnb.ca/en/document/cr/91-191")],
+    "NS": [("OHS Act", "https://nslegislature.ca/sites/default/files/legc/statutes/occupational%20health%20and%20safety.pdf"), ("Workplace Health and Safety Regulations", "https://novascotia.ca/just/regulations/regs/ohsworkplace.htm"), ("Occupational Safety General Regulations", "https://novascotia.ca/just/regulations/regs/ohsgensf.htm"), ("Occupational Health Regulations", "https://novascotia.ca/lae/healthandsafety/docs/occupationalhealthregs.pdf")],
+    "PE": [("OHS Act", "https://www.princeedwardisland.ca/en/legislation/occupational-health-and-safety-act"), ("OHS General Regulations", "https://www.princeedwardisland.ca/sites/default/files/legislation/o1-01g-occupational_health_and_safety_act_general_regulations.pdf")],
+    "NL": [("OHS Act", "https://www.assembly.nl.ca/legislation/sr/statutes/o03.htm"), ("OHS Regulations, 2012", "https://www.assembly.nl.ca/legislation/sr/regulations/rc120005.htm")],
+    "YT": [("Workers' Safety and Compensation Act", "https://www.wcb.yk.ca/web-0070/web-0137"), ("OHS Regulations, by part", "https://www.wcb.yk.ca/regulations"), ("Official versions", "https://yukon.ca/en/find-legislation")],
+    "NT": [("Safety Act", "https://gnwt.ca/sites/default/files/legacy_justice/files/legislation/safety/safety.a.pdf"), ("OHS Regulations (R-039-2015)", "https://www.justice.gov.nt.ca/en/files/legislation/safety/safety.r8.pdf")],
+    "NU": [("Safety Act", "https://www.nunavutlegislation.ca/en/consolidated-law/safety-act-consolidation"), ("OHS Regulations (not updated for R-007-2025 and R-041-2025)", "https://www.nunavutlegislation.ca/en/consolidated-law/occupational-health-and-safety-regulations-official-consolidation")],
+}
+
+
+def ref_url(j, ref):
+    """The official text behind a citation."""
+    L = LINKS[j]
+    if j == "BC":
+        m = re.search(r"Parts? (\d+)", ref)
+        return WSBC + "ohs-regulation/" + BC_PARTS[int(m.group(1))] if m and int(m.group(1)) in BC_PARTS else L[0][1]
+    if j == "ON":
+        return next((u for k, u in (("213/91", L[1][1]), ("297/13", L[2][1]), ("490/09", L[3][1])) if k in ref), L[0][1])
+    if j == "AB":
+        return L[1][1] if "Code" in ref else L[0][1]
+    if j == "NS":
+        return L[2][1] if "General Regulations" in ref else L[3][1] if "Occupational Health Regulations" in ref else L[1][1] if ref.startswith("Workplace") else L[0][1]
+    if j == "YT":
+        m = re.search(r"Part (\d+)", ref)
+        return "https://www.wcb.yk.ca/regulations/" + (YT_URL[int(m.group(1))] if m else "occupational-health-regulations") if m or "Workplace Health" in ref else L[0][1]
+    return L[0][1] if ref.startswith(LAWS[j][0]) else L[1][1]
+
+
+def ref_links():
+    return {j: {r[j]: ref_url(j, r[j]) for t in (ACTIONS, ZONE_RULE) for _, r in t.values()} for j in LINKS}
 
 
 def recommend(zone, top_drivers, province="BC"):
