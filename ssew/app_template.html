@@ -209,6 +209,12 @@ table.form td{padding:4px 6px}
 .scroute{fill:none;stroke:var(--navy);stroke-width:5;stroke-dasharray:14 10;stroke-linecap:round}
 .scsteps{list-style:none;margin:0;padding:0;display:grid;gap:7px;font-size:13.5px;align-content:start;min-width:0}.scsteps li{padding:7px 9px;border:1px solid var(--border);border-radius:9px;background:var(--surface);overflow-wrap:anywhere}.scsteps li b{display:block;font:700 13px var(--f-head)}.scsteps li.run{border-color:var(--signal)}.scsteps li.gap{border-left:5px solid var(--amber)}.scsteps li span{color:var(--ink2)}
 .sct{display:inline-block;border-radius:999px;padding:3px 9px;font:700 11.5px var(--f-head);white-space:nowrap}.sct.b2{background:var(--red);color:#fff}.sct.b1{background:var(--amber);color:#1a1205}.sct.b0{background:var(--green);color:#fff}.sct.n{background:var(--plane2);color:var(--muted)}
+.dl{max-width:560px;margin-inline:auto}.dlc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.dlz{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:8px}.dlz b{font:800 20px/1.2 var(--f-head);overflow-wrap:anywhere}.dlz span{color:var(--muted);font-size:13px;white-space:nowrap}
+.dlr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--grid);font-size:15px}.dlr>span{min-width:0}
+.dls{display:flex;align-items:center;gap:6px;flex:none}.dls button{width:44px;height:44px;font:800 22px var(--f-head);border:1px solid var(--axis);border-radius:10px;background:var(--plane);color:var(--ink);cursor:pointer}.dls output{min-width:36px;text-align:center;font:800 20px var(--f-head)}
+.dlo{display:flex;gap:4px;flex:none}.dlo button{min-height:44px;padding:0 9px;font:600 13px var(--f-body);border:1px solid var(--axis);border-radius:10px;background:var(--surface);color:var(--ink);cursor:pointer}.dlo button[aria-pressed="true"]{background:var(--navy);color:var(--navy-ink);border-color:var(--navy)}
+.dln{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.dln .btn{min-height:46px;flex:1 1 130px}.dlev{width:100%;min-height:44px;margin-top:6px;text-align:left}
 .sitebar{background:var(--plane);border-bottom:1px solid var(--border)}
 .sb{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding-block:10px;font-size:13.5px}
 .sb label{display:flex;gap:6px;align-items:center;color:var(--muted)}
@@ -256,7 +262,9 @@ footer b{color:var(--navy-ink)}
 <nav class="tabs" aria-label="Sections"><div class="wrap">
   <a href="#live" data-tab="live">Live site</a>
   <a href="#weather" data-tab="weather">Live weather</a>
-  <a href="#log" data-tab="log">Log a day<span class="dot" aria-hidden="true"></span></a>
+  <a href="#today" data-tab="today">Daily log</a>
+  <a href="#programme" data-tab="programme">Programme</a>
+  <a href="#log" data-tab="log">Full log<span class="dot" aria-hidden="true"></span></a>
   <a href="#ahead" data-tab="ahead">Look-ahead</a>
   <a href="#data" data-tab="data">Your data</a>
   <a href="#photo" data-tab="photo">Photo check</a>
@@ -325,6 +333,23 @@ footer b{color:var(--navy-ink)}
       <div class="alerts" id="alerts"></div>
     </div>
   </div>
+</section>
+
+<section id="programme" hidden>
+  <h2>Your programme</h2>
+  <p class="sub">Load the site's real schedule, and crews, zones and phases come from it instead of the generic programme. Export a CSV from Primavera P6, MS Project or a spreadsheet.</p>
+  <div class="card"><div class="bar"><input type="file" id="prFile" accept=".csv,text/csv" aria-label="Programme CSV file"><button class="btn" id="prTpl">Download a template</button><button class="btn" id="prDel" hidden>Go back to the generic programme</button></div>
+    <p class="note" style="margin-bottom:0">Columns needed: activity, start, finish. Helpful: zone and crew. Activities without a zone are matched from their names, and you confirm the ones that can't be matched.</p>
+    <div class="status" id="prSt" style="margin-top:10px"></div></div>
+  <div class="card" style="margin-top:14px" id="prCur" hidden><h3>Programme in use</h3><div class="scroll"><table class="t" id="prSum"></table></div></div>
+  <div class="card" style="margin-top:14px" id="prRev" hidden><h3>Check before using it</h3><div class="grid g3" id="prK" style="margin-bottom:12px"></div><div id="prUn"></div><div class="scroll"><table class="t" id="prTab"></table></div><div class="bar" style="margin-top:12px"><button class="btn primary" id="prUse">Use this programme</button><button class="btn" id="prCan">Cancel</button></div></div>
+</section>
+
+<section id="today" hidden>
+  <div class="dl"><h2 style="margin:0">Daily log</h2><p class="note" id="dlWho" style="margin:2px 0 10px"></p>
+    <div class="bar" style="margin-bottom:10px"><label class="note" style="margin:0;display:flex;gap:6px;align-items:center">Day <select id="dlDate"></select></label><label class="note" style="margin:0;display:flex;gap:6px;align-items:center">Your initials <input id="dlBy" maxlength="5" size="5" autocomplete="off"></label></div>
+    <div id="dlBody"></div><div class="status" id="dlSt" style="margin-top:10px"></div>
+    <p class="note" id="dlLink"></p></div>
 </section>
 
 <section id="weather" hidden>
@@ -735,9 +760,16 @@ try { PROJECT_START = localStorage.getItem("ssew.start") || PROJECT_START; } cat
 const progIdx = d => { let s = PROJECT_START; while (!isBiz(s)) s = addBiz(s, 1); return bizBetween(s, d); };
 const siteSeason = d => { const m = +d.slice(5, 7); return CA.north.includes(SITE.jur) ? ([11, 12, 1, 2, 3, 4].includes(m) ? .35 : 1) : SITE.type === "civil" && [12, 1, 2, 3].includes(m) ? .5 : 1; };
 const siteFactor = (z, d) => (CA.arch[SITE.type][z] ?? 1) * siteSeason(d);
-const crewAt = (z, d) => { const i = progIdx(d); if (i < 0 || i >= D.days.length) return 0; const v = typeof ORG !== "undefined" && ORG && ORG.zones && ORG.zones[z]; if (v && v.on === false) return 0;
+let PRG = null;                                          // the site's own programme, when loaded: {name, at, start, end, acts: [{n, z, s, e, c}]}
+const prgIndex = p => { p.by = {}; p.acts.forEach(a => (p.by[a.z] = p.by[a.z] || []).push(a)); return p; };
+const progLen = () => PRG ? Math.max(1, bizBetween(PRG.start, PRG.end) + 1) : D.days.length;
+const crewAt = (z, d) => { const v = typeof ORG !== "undefined" && ORG && ORG.zones && ORG.zones[z]; if (v && v.on === false) return 0;
+  if (PRG) return (PRG.by[z] || []).reduce((a, x) => a + (x.s <= d && x.e >= d ? x.c : 0), 0);
+  const i = progIdx(d); if (i < 0 || i >= D.days.length) return 0;
   const f = v && v.peak != null ? (v.peak / Math.max(1, ...D.crew[z])) * siteSeason(d) : siteFactor(z, d); return Math.round((D.crew[z][i] || 0) * f); };
-const phaseAt = d => { const i = progIdx(d); return i < 0 ? "Before the project starts" : i >= D.days.length ? "Project complete" : (phaseOf(D.days[i]) || "Mobilising") + ` · programme day ${i + 1} of ${D.days.length}`; };
+const phaseAt = d => { const i = progIdx(d), N = progLen(); if (i < 0) return "Before the project starts"; if (i >= N) return "Project complete";
+  if (PRG) { const on = PRG.acts.filter(a => a.s <= d && a.e >= d); return (on.length ? on.slice(0, 2).map(a => a.n).join(", ") + (on.length > 2 ? ` and ${on.length - 2} more` : "") : "No activities today") + ` · programme day ${i + 1} of ${N}`; }
+  return (phaseOf(D.days[i]) || "Mobilising") + ` · programme day ${i + 1} of ${N}`; };
 function climateDay(d, y) {                            // a live forecast where there is one; otherwise the same calendar day in a recorded year (real ECCC weather)
   if (LFC[d]) return LFC[d];
   let k = y + d.slice(4); if (!(k in clIdx)) k = y + "-02-28"; const i = clIdx[k];
@@ -823,7 +855,7 @@ const featX = (z, i) => (LX[H.days[i]] && LX[H.days[i]][z]) || features(z, i);
    days logged in the live feed in place of the typical ones. Every zone-day is scored with the trained model. */
 function buildProjection() {
   let s0 = PROJECT_START; while (!isBiz(s0)) s0 = addBiz(s0, 1);
-  const dates = bizRange(addBiz(s0, -20), D.days.length + 20), r = rngFor("proj" + s0);
+  const dates = bizRange(addBiz(s0, -20), progLen() + 20), r = rngFor("proj" + s0);
   const known = { ...localDocs, ...Object.fromEntries(feedDocs.map(f => [f.date, f])) };
   const P = { days: dates, logs: {}, crew: {}, risk: {}, weather: { gust: [], humidex: [], rain: [], tmin: [], snow: [], chill: [], dir: [] }, fc: {}, live: new Set(), events: [], proj: true, prov: SITE.jur, base_rate: siteRate(), th: siteTh() };
   dates.forEach(d => { const ws = YEARS.map(y => climateDay(d, y)), avg = k => ws.reduce((a, w) => a + w[k], 0) / ws.length;
@@ -1015,7 +1047,7 @@ function openShow() {                                    // the first thing anyo
   OS().hidden = false; document.body.style.overflow = "hidden";
   OS().innerHTML = `<div class="osbox"><div class="eb">Site Safety Early Warning</div><h1>${esc(o.company)}</h1>${o.site ? `<p class="prj">${esc(o.site)}</p>` : ""}<p class="loc">${esc(orgLoc(o))}</p>
     <p class="meta">${esc(when)} · ${esc(CA.types[o.type])} · ${esc(CA.jur[o.jur].law)}</p><button class="osbtn" id="osGo">Start site scan</button>${D.client ? "" : '<button class="oslink" id="osEd">Change details</button>'}</div>`;
-  $("#osGo").onclick = enterApp; const ed = $("#osEd"); if (ed) ed.onclick = () => openForm(); $("#osGo").focus();
+  if (location.hash === "#today") $("#osGo").textContent = "Start today's log"; $("#osGo").onclick = enterApp; const ed = $("#osEd"); if (ed) ed.onclick = () => openForm(); $("#osGo").focus();
 }
 function openForm() {
   const o = ORG || { jur: SITE.jur, city: SITE.city, type: SITE.type, start: PROJECT_START };
@@ -1037,13 +1069,14 @@ function openForm() {
     saveOrg(orgClean({ company: co, site: $("#osSi").value, address: $("#osAd").value, jur: $("#osJ").value, city: $("#osC").value, type: $("#osT").value, start: $("#osS").value })); };
   $("#osCo").focus();
 }
+async function prConnect() { try { const db = window.claude && await window.claude.use("db"); if (!db) return; prDoc = db.doc("config/programme"); prDoc.onSnapshot(sn => { const p = prClean(sn && sn.data && sn.data()); if (!p || (PRG && JSON.stringify(p.acts) === JSON.stringify(PRG.acts))) return; prApply(p, true); if (drawn.programme) prShow(); if (view === "proj") setView("proj"); if ($("#scMap svg") && entered) runScan(true); }, () => {}); } catch (_) {} }
 function orgPersist() { try { localStorage.setItem(ORG_KEY, JSON.stringify(ORG)); } catch (_) {} if (orgDoc) orgDoc.set(ORG).catch(() => {}); }   // viewers who can't write the shared record keep it in this browser
 function saveOrg(o) {
-  ORG = o; orgPersist(); if (o.start) setStart(o.start); const was = entered; entered = true;     // setSite fetches the forecast
+  ORG = o; orgPersist(); if (PRG) setStart(PRG.start); else if (o.start) setStart(o.start); const was = entered; entered = true;     // setSite fetches the forecast
   setSite({ jur: o.jur, city: o.city, type: o.type }); entered = was; drawOrg(); entered = true; closeOpen(); show("live"); applyZones(); runScan();
 }
 const closeOpen = () => { OS().hidden = true; OS().innerHTML = ""; document.body.style.overflow = ""; };
-function enterApp() { closeOpen(); entered = true; show("live"); runScan(); }
+function enterApp() { closeOpen(); entered = true; if (location.hash === "#today") { show("today"); loadForecast(false); return; } show("live"); runScan(); }
 async function orgConnect() {                            // the page's shared record, so every safety officer sees the same company
   if (D.client) return;
   try { const db = window.claude && await window.claude.use("db"); if (!db) return; orgDoc = db.doc("config/site");
@@ -1121,9 +1154,9 @@ async function runScan(fast = false) {
   // 3 programme: today's work day, or the first day of a project not yet started
   PROJ = null; const t = todayLocal(); setView("proj", isBiz(t) ? t : addBiz(t, 1)); const d = H.days[day], when = new Date(d + "T12:00").toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", year: "numeric" }); const crewNow = ZIDS.reduce((a, z) => a + (H.crew[z][day] || 0), 0), zonesNow = ZIDS.filter(z => H.risk[z][day]).length;
   $("#scL").textContent = `${when} · ${phaseAt(d)}${d > t ? " · Project hasn't started, so this scans its first work day" : ""}`;
-  scStep("pl", "Programme", `${phaseAt(d)}. ${zonesNow} zones working, ${crewNow} workers planned. Generic programme: yours isn't loaded.`, "gap"); await scWait(500);
+  scStep("pl", "Programme", `${phaseAt(d)}. ${zonesNow} zones working, ${crewNow} workers planned. ${PRG ? `Your programme: ${PRG.acts.length} activities.` : "Generic programme: yours isn't loaded."}`, PRG ? "" : "gap"); await scWait(500);
   // 4 site records
-  const lo = Math.max(0, day - 19), logged = H.days.slice(lo, day + 1).filter(x => H.live.has(x)).length, ph = typeof phRes !== "undefined" && phRes && phRes.date === d ? phRes.res.photos.length : 0;
+  const lo = Math.max(0, day - 19), logged = H.days.slice(lo, day + 1).filter((x, q) => H.live.has(x) && ZIDS.some(z => (H.crew[z][lo + q] || 0) > 0)).length, ph = typeof phRes !== "undefined" && phRes && phRes.date === d ? phRes.res.photos.length : 0;
   scStep("lg", "Site logs", logged ? `${logged} of the last ${day - lo + 1} work days logged; the rest use typical readings.` : `None logged in the last ${day - lo + 1} work days. Typical readings stand in.`, logged >= 10 ? "" : "gap"); await scWait(400);
   scStep("ph", "Photos, cameras and sensors", ph ? `${ph} photos checked today. No cameras or sensors connected.` : "No photos today. No cameras or sensors connected, so nothing here can see the site.", "gap"); await scWait(400);
   // 5 the ten zones, in plan order
@@ -1134,12 +1167,122 @@ async function runScan(fast = false) {
   // the safety walk: from the gate, through flagged zones, riskiest first
   const walk = done.filter(o => o.b > 0).sort((a, b) => b.r[0] - a.r[0]), start = zoneById.GTE.sc; $("#scRoute").setAttribute("points", walk.length ? [start, ...walk.map(o => zoneById[o.z].sc)].map(q => q.join(",")).join(" ") : ""); $("#scSweepG").style.display = "none";
   const pc = p => p < .005 ? "<1%" : pct(p), inj = p => 1 - Math.pow(1 - p, INJ_SHARE), nm = p => 1 - Math.pow(1 - p, 1 - INJ_SHARE), conf = logged >= 10 ? "Partial" : logged ? "Low" : "Very low";
-  $("#scK").innerHTML = [["Potential injury areas", red.length, "highest alert: act before the shift"], ["Potential near-miss areas", amb.length, "extra controls today"], ["No warning signs", done.length - red.length - amb.length, "normal controls still apply"], ["Scan confidence", conf, logged ? `${logged} days of real logs` : "no real site records yet"]].map(([a, v, n], j) => `<div class="tile"><div class="k">${a}</div><div class="v${j === 3 ? " sig" : ""}" style="font-size:28px">${v}</div><div class="n">${n}</div></div>`).join("");
+  $("#scK").innerHTML = [["Potential injury areas", red.length, "highest alert: act before the shift"], ["Potential near-miss areas", amb.length, "extra controls today"], ["No warning signs", done.length - red.length - amb.length, "normal controls still apply"], ["Scan confidence", conf, logged ? `${logged} day${logged === 1 ? "" : "s"} of real logs` : "no real site records yet"]].map(([a, v, n], j) => `<div class="tile"><div class="k">${a}</div><div class="v${j === 3 ? " sig" : ""}" style="font-size:28px">${v}</div><div class="n">${n}</div></div>`).join("");
   $("#scTab").innerHTML = "<tr><th class='r'>No.</th><th>Zone</th><th>Result</th><th class='r'>Walk order</th><th class='r'>Workers</th><th class='r'>Injury, 5 days</th><th class='r'>Near miss, 5 days</th><th>Most likely</th><th>Why</th><th>First control</th></tr>" + rows.map(o => { const zn = esc(zoneById[o.z].name), w = walk.indexOf(o) + 1; if (!o.r) { const nx = H.crew[o.z].findIndex((v, i) => i > day && v > 0); return `<tr><td class="r">${o.k}</td><td><b>${zn}</b></td><td><span class="sct n">No work</span></td><td class="r"></td><td class="r">0</td><td class="r">–</td><td class="r">–</td><td colspan="3" class="note">${nx < 0 ? "No more work planned" : "Work starts " + new Date(H.days[nx] + "T12:00").toLocaleDateString("en-CA", { month: "short", year: "numeric" })}</td></tr>`; }
     const dr = o.r[2].map(i => D.drivers[i]), ct = dr.length && D.actions[dr[0]] ? D.actions[dr[0]] : D.zone_rule[o.z]; return `<tr><td class="r">${o.k}</td><td><b>${zn}</b></td><td><span class="sct b${o.b}">${SC_NAME[o.b]}</span></td><td class="r">${w || ""}</td><td class="r">${H.crew[o.z][day] || 0}</td><td class="r">${pc(inj(o.r[0]))}</td><td class="r">${pc(nm(o.r[0]))}</td><td>${esc(likelyEvents(o.z))}</td><td>${esc(dr.join(", ") || "Crew size only")}</td><td>${esc(ct.action.split(";")[0])}<span class="ref" style="display:block;font-size:12px;color:var(--muted)">${esc(ct.ref[PROV] || "")}</span></td></tr>`; }).join("");
   $("#scN").textContent = `This scan reads the records the system holds; it can't see the site. Colours show relative risk from the programme, weather and any logs, not incidents that have been detected or will happen. "No warning signs" doesn't mean no incident: in testing on simulated logs, ${pct(1 - M.warned_share)} of events had no warning. The model can't tell in advance whether an event will be an injury or a near miss, so those two chances assume a quarter of events are injuries. The zone model is trained on simulated logs.`;
   $("#scGo").disabled = false; $("#scSkip").hidden = true; scanBusy = false; render();
 }
+/* ================================================================== loading the site's programme */
+const PR_KEYS = [["CRN", /crane|hoist|rigging|\blift\b/], ["EXC", /excavat|shoring|backfill|trench|earthwork|bulk dig|\bpil(e|ing)\b|caisson|underpin|site prep|grading/], ["ROF", /roof|penthouse|membrane/],
+  ["SCF", /scaffold|fa[cç]ade|envelope|cladding|curtain wall|glazing|window|masonry|brick|exterior|siding/], ["MEP", /electrical|mechanical|plumbing|hvac|sprinkler|duct|conduit|rough.?in|fire protection|\bmep\b/],
+  ["FRM", /formwork|forming|rebar|reinforc|concrete|\bpour|footing|foundation|slab on grade|\bsog\b|core wall|shear wall|column/], ["DCK", /suspended slab|\bdeck|\bslab|structural steel|steel erect|joist|floor framing|structure/],
+  ["INT", /drywall|paint|flooring|finish|millwork|ceiling|\btile|interior|\bdoors?\b|cabinet|\bstuds?\b|commission/], ["LAY", /laydown|material|storage|stockpile/], ["GTE", /traffic|\bgate\b|site access|paving|\broad|hoarding|fenc|deliver|mobiliz|mobilis|landscap/]];
+const prMatch = s => { s = String(s || "").toLowerCase(); const h = PR_KEYS.find(([, re]) => re.test(s)); return h ? h[0] : ""; };
+const MON = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+function prDate(raw, note) {
+  let s = String(raw || "").trim().replace(/\s*[A*]$/, "").replace(/^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?,?\s+/i, "").replace(/[ T]+\d{1,2}:\d{2}.*$/, ""); if (!s) return null; let m, y, mo, d;
+  const yr = v => +v < 100 ? 2000 + +v : +v;
+  if ((m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/))) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+  else if ((m = s.match(/^(\d{1,2})[- ]([a-z]{3})[a-z]*[- ,]+(\d{2,4})$/i)) && MON[m[2].toLowerCase()]) { d = +m[1]; mo = MON[m[2].toLowerCase()]; y = yr(m[3]); }
+  else if ((m = s.match(/^([a-z]{3})[a-z]*\.? (\d{1,2}),? (\d{2,4})$/i)) && MON[m[1].toLowerCase()]) { mo = MON[m[1].toLowerCase()]; d = +m[2]; y = yr(m[3]); }
+  else if ((m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/))) { const a = +m[1], b = +m[2]; y = yr(m[3]); if (a > 12) { d = a; mo = b; } else { mo = a; d = b; if (b <= 12 && a !== b) note.amb = true; } }
+  else return null;
+  const t = new Date(Date.UTC(y, mo - 1, d)); if (t.getUTCMonth() !== mo - 1 || y < 2000 || y > 2100) return null; return ymd(t);
+}
+let prDraft = null, prDoc = null;
+function prRead(text, name) {
+  const rows = parseCsv(text).filter(r => r.some(c => String(c).trim())); if (rows.length < 2) throw new Error("the file has no activity rows");
+  const h = rows[0].map(normH), ix = ns => h.findIndex(x => ns.includes(x));
+  const c = { n: ix(["activity", "activity_name", "name", "task", "task_name", "description"]), z: ix(["zone", "area", "zone_id", "location"]), s: ix(["start", "start_date", "early_start", "planned_start", "bl_project_start"]), e: ix(["end", "finish", "end_date", "finish_date", "early_finish", "planned_finish", "bl_project_finish"]), w: ix(["crew", "workers", "headcount", "labour", "labor"]) };
+  if (c.n < 0 || c.s < 0 || c.e < 0) throw new Error("it needs activity, start and finish columns; this file has " + rows[0].slice(0, 8).join(", "));
+  const note = {}, acts = [], un = [], bad = [], skipped = []; let noCrew = 0;
+  rows.slice(1, 3001).forEach((r, k) => { const nm = String(r[c.n] || "").trim().slice(0, 70), st = prDate(r[c.s], note), en = prDate(r[c.e], note), zr = c.z >= 0 ? r[c.z] : "";
+    if (!st || !en) return bad.push(k + 2); const z = ZKEY[normH(zr || "")] || prMatch(zr) || prMatch(nm), cw = c.w >= 0 ? parseFloat(r[c.w]) : NaN, has = Number.isFinite(cw) && cw >= 0;
+    if (st === en && !has && !z) return skipped.push(nm); if (!has) noCrew++;
+    const a = { n: nm || "Activity", z, s: st, e: en < st ? st : en, c: has ? Math.min(500, Math.round(cw)) : null }; if (z) acts.push(a); else un.push(a); });
+  return { name: String(name || "programme.csv").slice(0, 80), acts, un, bad, skipped, note, noCrew, hasCrew: c.w >= 0 };
+}
+function prFinal(D0) { const all = D0.acts.concat(D0.un.filter(a => a.z)); all.forEach(a => { if (a.c == null) a.c = Math.max(2, Math.round((BASE[a.z] && BASE[a.z].crew) || 4)); });
+  const st = all.reduce((a, x) => x.s < a ? x.s : a, "9999"), en = all.reduce((a, x) => x.e > a ? x.e : a, "0000"); return { name: D0.name, at: new Date().toISOString().slice(0, 10), start: st, end: en, acts: all }; }
+function prClean(p) { if (!p || !Array.isArray(p.acts) || !p.acts.length) return null; const iso = /^\d{4}-\d{2}-\d{2}$/; const acts = p.acts.filter(a => a && zoneById[a.z] && iso.test(a.s) && iso.test(a.e) && Number.isFinite(a.c)).map(a => ({ n: String(a.n || "Activity").slice(0, 70), z: a.z, s: a.s, e: a.e, c: Math.max(0, Math.min(500, a.c)) })); if (!acts.length) return null;
+  return prgIndex({ name: String(p.name || "").slice(0, 80), at: String(p.at || "").slice(0, 10), start: acts.reduce((a, x) => x.s < a ? x.s : a, "9999"), end: acts.reduce((a, x) => x.e > a ? x.e : a, "0000"), acts }); }
+function prApply(p, persist) { PRG = p; if (persist) { try { p ? localStorage.setItem("ssew.prog", JSON.stringify({ name: p.name, at: p.at, acts: p.acts })) : localStorage.removeItem("ssew.prog"); } catch (_) {} }
+  if (p) { setStart(p.start); if (ORG) ORG.start = p.start; } const ps = $("#pStart"); if (ps) ps.disabled = !!p; PROJ = null; }
+function prShow() { const cur = $("#prCur"); if (!cur) return; cur.hidden = !PRG; $("#prDel").hidden = !PRG; if (!PRG) return;
+  const sd = d => new Date(d + "T12:00").toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" });
+  $("#prSum").innerHTML = `<tr><th>Zone</th><th class="r">Activities</th><th class="r">Peak crew</th><th>First activity</th><th>Last activity</th></tr>` + ZIDS.map(z => { const a = PRG.by[z] || []; if (!a.length) return `<tr><td>${esc(zoneById[z].name)}</td><td class="r">0</td><td class="r">0</td><td colspan="2" class="note">Not in this programme</td></tr>`; const ds = [...new Set(a.flatMap(x => [x.s]))]; const pk = Math.max(...ds.map(d => a.reduce((q, x) => q + (x.s <= d && x.e >= d ? x.c : 0), 0))); return `<tr><td>${esc(zoneById[z].name)}</td><td class="r">${a.length}</td><td class="r">${pk}</td><td>${sd(a.reduce((q, x) => x.s < q ? x.s : q, "9999"))}</td><td>${sd(a.reduce((q, x) => x.e > q ? x.e : q, "0000"))}</td></tr>`; }).join("");
+}
+function prDraw() {
+  const R0 = prDraft, st = $("#prSt"); $("#prRev").hidden = false;
+  $("#prK").innerHTML = [["Activities read", R0.acts.length + R0.un.length, `${R0.un.length} ${R0.un.length === 1 ? "needs" : "need"} a zone`], ["Rows skipped", R0.bad.length + R0.skipped.length, `${R0.bad.length} with unreadable dates, ${R0.skipped.length} milestones`], ["Crew figures", R0.noCrew ? `${R0.noCrew} missing` : "All present", R0.noCrew ? "those use the zone's typical crew" : "from your file"]].map(([k, v, n]) => `<div class="tile"><div class="k">${k}</div><div class="v" style="font-size:24px">${v}</div><div class="n">${n}</div></div>`).join("");
+  st.className = "status " + (R0.note.amb || R0.noCrew ? "warn" : "ok"); st.textContent = `Read ${R0.name}.` + (R0.note.amb ? " Dates such as 03/04/2027 were read as month/day/year: check they're right below." : "") + (R0.bad.length ? ` Rows with unreadable dates: ${R0.bad.slice(0, 8).join(", ")}${R0.bad.length > 8 ? "…" : ""}.` : "");
+  const opt = v => `<option value="">Leave out</option>` + ZIDS.map(z => `<option value="${z}"${z === v ? " selected" : ""}>${esc(zoneById[z].name)}</option>`).join("");
+  $("#prUn").innerHTML = R0.un.length ? `<p class="note" style="margin-top:0"><b>Choose a zone for ${R0.un.length === 1 ? "this activity" : `these ${R0.un.length} activities`}.</b></p><div class="scroll"><table class="t" style="margin-bottom:12px">${R0.un.slice(0, 300).map((a, k) => `<tr><td>${esc(a.n)}</td><td>${a.s}</td><td><select data-u="${k}" aria-label="Zone for ${esc(a.n)}">${opt(a.z)}</select></td></tr>`).join("")}</table></div>` : "";
+  document.querySelectorAll("#prUn select").forEach(e => e.onchange = () => { R0.un[+e.dataset.u].z = e.value; prTable(); }); prTable();
+}
+function prTable() { const R0 = prDraft, all = R0.acts.concat(R0.un.filter(a => a.z)); $("#prUse").disabled = !all.length;
+  $("#prTab").innerHTML = "<tr><th>Zone</th><th class='r'>Activities</th><th>Example</th><th>From</th><th>To</th></tr>" + ZIDS.map(z => { const a = all.filter(x => x.z === z); return a.length ? `<tr><td>${esc(zoneById[z].name)}</td><td class="r">${a.length}</td><td>${esc(a[0].n)}</td><td>${a.reduce((q, x) => x.s < q ? x.s : q, "9999")}</td><td>${a.reduce((q, x) => x.e > q ? x.e : q, "0000")}</td></tr>` : ""; }).join(""); }
+DRAW_LATE.programme = () => {
+  const st = $("#prSt"); prShow(); if (PRG) { st.className = "status ok"; st.textContent = `Using ${PRG.name || "your programme"}, loaded ${PRG.at}: ${PRG.acts.length} activities.`; } else { st.className = "status"; st.textContent = "The generic 30-month programme is in use."; }
+  $("#prFile").onchange = e => { const fl = e.target.files[0]; if (!fl) return; const rd = new FileReader(); rd.onload = () => { try { prDraft = prRead(String(rd.result), fl.name); prDraw(); } catch (x) { $("#prRev").hidden = true; st.className = "status warn"; st.textContent = "Couldn't read this file: " + (x && x.message || x) + "."; } }; rd.onerror = () => { st.className = "status warn"; st.textContent = "Couldn't open this file."; }; rd.readAsText(fl); };
+  $("#prTpl").onclick = () => offerFile("programme_template.csv", "activity,zone,start,finish,crew\nBulk excavation,Excavation,2027-03-01,2027-04-16,12\nFoundations and footings,Formwork,2027-04-05,2027-05-28,18\nTower crane erection,Crane,2027-04-12,2027-04-14,6\n", "text/csv", st);
+  $("#prCan").onclick = () => { $("#prRev").hidden = true; prDraft = null; $("#prFile").value = ""; };
+  $("#prUse").onclick = async () => { const p = prClean(prFinal(prDraft)); if (!p) return; prApply(p, true); let shared = false; if (prDoc) { try { await prDoc.set({ name: p.name, at: p.at, acts: p.acts }); shared = true; } catch (_) {} } $("#prRev").hidden = true; prDraft = null; $("#prFile").value = ""; prShow(); st.className = "status ok"; st.textContent = `Now using your programme: ${p.acts.length} activities, ${p.start} to ${p.end}.${shared ? " Everyone with edit access sees it." : " Saved in this browser."}`; drawn.today = false; if (view === "proj") setView("proj"); if ($("#scMap svg")) runScan(true); };
+  $("#prDel").onclick = async () => { prApply(null, true); if (prDoc) { try { await prDoc.delete(); } catch (_) {} } prShow(); st.className = "status"; st.textContent = "Back to the generic programme."; if (view === "proj") setView("proj"); if ($("#scMap svg")) runScan(true); };
+};
+/* ================================================================== the daily log: one zone at a time, about 30 seconds each, built for a phone */
+const DL_OPT = { house: [["Good", 88], ["Fair", 75], ["Poor", 55]], ppe: [["All OK", 3], ["A few", 8], ["Many", 18]], ot: [["None", 2], ["Some", 10], ["A lot", 25]] };
+let DL = null;
+function dlDays() { const out = [], t = todayLocal(); let d = isBiz(t) ? t : addBiz(t, -1); for (let k = 0; k < 7; k++) { out.push(d); d = addBiz(d, -1); } return out; }
+function dlStart(date) {
+  const docs = { ...localDocs, ...Object.fromEntries(feedDocs.map(f => [f.date, f])) }, was = docs[date];
+  const zones = ZIDS.filter(z => crewAt(z, date) > 0 || (was && was.zones && was.zones[z] && was.zones[z].crew > 0));
+  DL = { date, was: !!was, list: zones, k: 0, done: new Set((was && was.visited) || []), vals: {}, events: was ? (was.events || []).slice() : [] };
+  ZIDS.forEach(z => { const p = was && was.zones && was.zones[z], T = typicalDay(z, crewAt(z, date)); DL.vals[z] = p && p.crew > 0 ? { ...p, nm: p.nm || 0, obs: p.obs || 0, permits: p.permits || 0, newN: Math.round((p.new || 0) * p.crew / 100) } : { crew: crewAt(z, date), nm: 0, obs: 0, permits: 0, newN: 0, house: 88, ppe: 3, ot: 2, trades: T ? T.trades : 1 }; });
+  dlDraw();
+}
+function dlDraw() {
+  const b = $("#dlBody"), s = DL; if (!s.list.length) { b.innerHTML = `<div class="dlc"><p style="margin-top:0">No zones are planned for this day.</p><div class="dlr"><span>Add a zone that worked</span><select id="dlAdd" aria-label="Zone that worked"><option value="">Choose</option>${ZIDS.map(z => `<option value="${z}">${esc(zoneById[z].name)}</option>`).join("")}</select></div></div>`; $("#dlAdd").onchange = e => { if (e.target.value) { s.list.push(e.target.value); if (!s.vals[e.target.value].crew) s.vals[e.target.value].crew = 1; dlDraw(); } }; return; }
+  if (s.k >= s.list.length) return dlSummary();
+  const z = s.list[s.k], v = s.vals[z], step = (key, label, max = 99) => `<div class="dlr"><span>${label}</span><div class="dls"><button type="button" data-d="${key}" data-m="-1" aria-label="Fewer: ${label}">−</button><output id="dl_${key}">${v[key]}</output><button type="button" data-d="${key}" data-m="1" data-x="${max}" aria-label="More: ${label}">+</button></div></div>`;
+  const pick = (key, label) => `<div class="dlr"><span>${label}</span><div class="dlo" role="group" aria-label="${label}">${DL_OPT[key].map(([n, q]) => `<button type="button" data-o="${key}" data-v="${q}" aria-pressed="${v[key] === q}">${n}</button>`).join("")}</div></div>`;
+  b.innerHTML = `<div class="dlc"><div class="dlz"><b>${esc(zoneById[z].name)}</b><span>Zone ${s.k + 1} of ${s.list.length}</span></div>
+    ${step("crew", "Workers here today", 500)}${step("nm", "Near misses or close calls")}${step("obs", "Hazards spotted")}${pick("house", "Housekeeping")}${pick("ppe", "PPE gaps")}${step("newN", "New workers on this crew")}${pick("ot", "Overtime")}${step("trades", "Trades working here", 30)}${step("permits", "Permit problems")}
+    <div id="dlEv">${s.events.filter(e => e.zone === z).map(e => `<p class="note" style="margin:6px 0 0"><b>${esc(e.kind)}</b> recorded here. Report it through your usual process too.</p>`).join("")}</div>
+    <details style="margin-top:8px"><summary>Record an incident in this zone</summary>${["Time-loss injury", "Health-care injury", "High-potential near miss"].map(k => `<button type="button" class="btn dlev" data-k="${k}">${k}</button>`).join("")}<p class="note">Don't enter names or medical details.</p></details>
+    <div class="dln">${s.k ? '<button type="button" class="btn" id="dlBack">Back</button>' : ""}<button type="button" class="btn primary" id="dlNext">${s.k + 1 < s.list.length ? "Next zone" : "Review"}</button></div>
+    <button type="button" class="btn dlev" id="dlDone" style="text-align:center">Finish now and review</button></div>`;
+  b.querySelectorAll("[data-d]").forEach(e => e.onclick = () => { const k = e.dataset.d; v[k] = Math.max(0, Math.min(+(e.dataset.x || 500), v[k] + +e.dataset.m)); $("#dl_" + k).textContent = v[k]; s.done.add(z); });
+  b.querySelectorAll("[data-o]").forEach(e => e.onclick = () => { v[e.dataset.o] = +e.dataset.v; s.done.add(z); b.querySelectorAll(`[data-o="${e.dataset.o}"]`).forEach(q => q.setAttribute("aria-pressed", q === e)); });
+  b.querySelectorAll("[data-k]").forEach(e => e.onclick = () => { s.events.push({ zone: z, kind: e.dataset.k }); s.done.add(z); dlDraw(); });
+  $("#dlNext").onclick = () => { s.done.add(z); s.k++; dlDraw(); }; if ($("#dlBack")) $("#dlBack").onclick = () => { s.k--; dlDraw(); }; $("#dlDone").onclick = () => { s.done.add(z); s.k = s.list.length; dlDraw(); };
+}
+function dlDoc() { const s = DL, zones = {}; ZIDS.forEach(z => { const v = s.vals[z]; if (s.list.includes(z) && s.done.has(z)) zones[z] = { crew: v.crew, nm: v.nm, obs: v.obs, ppe: v.ppe, house: v.house, new: v.crew ? +(100 * Math.min(v.newN, v.crew) / v.crew).toFixed(1) : 0, ot: v.ot, trades: v.trades, permits: v.permits };
+    else { const T = typicalDay(z, crewAt(z, s.date)); zones[z] = T ? { ...T, nm: +T.nm.toFixed(2), obs: +T.obs.toFixed(2), permits: +T.permits.toFixed(2), ppe: +T.ppe.toFixed(1), house: +T.house.toFixed(1), new: +T.new.toFixed(1), ot: +T.ot.toFixed(1) } : { crew: 0 }; } });
+  const o = outlook(s.date); return { date: s.date, weather: { gust: o.gust, humidex: o.humidex, wet: o.wet, freeze: o.freeze, cold: o.cold }, zones, events: s.events, quick: true, visited: [...s.done], by: ($("#dlBy").value || "").trim().toUpperCase().slice(0, 5) }; }
+function dlSummary() {
+  const s = DL, miss = s.list.filter(z => !s.done.has(z)), ev = s.events.length; $("#dlBody").innerHTML = `<div class="dlc"><div class="dlz"><b>Review</b><span>${new Date(s.date + "T12:00").toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" })}</span></div>
+    <div class="dlr"><span>Zones logged</span><b>${s.list.length - miss.length} of ${s.list.length}</b></div><div class="dlr"><span>Near misses</span><b>${s.list.reduce((a, z) => a + (s.done.has(z) ? s.vals[z].nm : 0), 0)}</b></div><div class="dlr"><span>Hazards spotted</span><b>${s.list.reduce((a, z) => a + (s.done.has(z) ? s.vals[z].obs : 0), 0)}</b></div><div class="dlr"><span>Incidents</span><b>${ev}</b></div>
+    ${miss.length ? `<p class="note">Not logged, so typical readings will be used: ${esc(miss.map(z => zoneById[z].name).join(", "))}.</p>` : ""}${s.was ? '<p class="note">This day was already logged. Saving replaces that entry.</p>' : ""}
+    <div class="dln"><button type="button" class="btn" id="dlBack2">Back</button><button type="button" class="btn primary" id="dlSave">Save the day</button></div></div>`;
+  $("#dlBack2").onclick = () => { s.k = Math.max(0, s.list.length - 1); dlDraw(); }; $("#dlSave").onclick = dlSave;
+}
+function dlSaveLocal(doc) { localDocs[doc.date] = doc; try { const a = JSON.parse(localStorage.getItem("ssew.docs") || "{}"); a[doc.date] = doc; localStorage.setItem("ssew.docs", JSON.stringify(a)); } catch (_) {} applyDoc(doc); rebuildLive(); }
+async function dlSave() {
+  const doc = dlDoc(), st = $("#dlSt"); $("#dlSave").disabled = true; let msg = "", cls = "ok";
+  if (doc.date <= D.days[D.days.length - 1]) { st.className = "status warn"; st.textContent = "That date is too early to log."; return; }
+  if (dbRef) { try { await dbRef.doc(doc.date).set({ ...doc, at: new Date().toISOString() }); msg = "Saved. Everyone with the page sees it."; } catch (e) { dlSaveLocal(doc); cls = "warn"; msg = "Saved on this device only, because this account can't add to the shared log. Ask the page's owner for edit access."; } }
+  else { dlSaveLocal(doc); cls = "warn"; msg = "Saved on this device only. Shared saving needs the page's own database or your hosted system."; }
+  const sc = scoreDoc(doc), top = ZIDS.map(z => [z, sc[z]]).filter(o => o[1]).sort((a, b) => b[1].r[0] - a[1].r[0]).slice(0, 3);
+  $("#dlBody").innerHTML = `<div class="dlc"><div class="dlz"><b>Day saved</b></div>${top.map(([z, o]) => `<div class="dlr"><span>${esc(zoneById[z].name)}</span><span class="chip ${BAND[o.r[1]]}">${BAND[o.r[1]]}</span></div>`).join("") || "<p>No zones worked.</p>"}<p class="note">Alert level for the highest-risk zones, with today's readings. The scan shows the detail.</p><div class="dln"><button type="button" class="btn primary" id="dlScan">Run the site scan</button></div></div>`;
+  $("#dlScan").onclick = () => { show("live"); try { history.replaceState(null, "", "#live"); } catch (_) {} runScan(); }; st.className = "status " + cls; st.textContent = msg;
+}
+DRAW_LATE.today = () => {
+  $("#dlWho").textContent = (ORG ? [ORG.company, ORG.site].filter(Boolean).join(" · ") : "Sample site") + ". About 30 seconds a zone. Change only what's different.";
+  const ds = dlDays(); $("#dlDate").innerHTML = ds.map(d => `<option value="${d}">${new Date(d + "T12:00").toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" })}</option>`).join(""); $("#dlDate").onchange = e => { $("#dlSt").textContent = ""; dlStart(e.target.value); };
+  $("#dlLink").innerHTML = `Open this on a phone: <span style="user-select:all;overflow-wrap:anywhere">${esc(SELF_URL)}#today</span>. On your own hosted copy, use its address with #today.`; dlStart(ds[0]);
+};
 function ticker(i) {
   const items = [];
   ZIDS.forEach(z => { const r = H.risk[z][i]; if (!r || r[1] === 0) return;
@@ -1676,7 +1819,7 @@ const DRAW = {
 <h3>What is simulated</h3>
 <p>${NSITE} hypothetical sites across all 13 jurisdictions, in four project types, and their daily logs: crews by zone, near-miss reports, hazard observations, PPE and housekeeping audits, permit issues, new workers, overtime and trade congestion. A hidden safety climate in each zone drifts and sometimes deteriorates (a new subcontractor, a schedule crunch); it drives both the logs and the incidents, and the model never sees it.</p>
 <h3>The model and the live feed</h3>
-<p>Gradient-boosted trees on 5-, 10- and 20-day indicator windows, the planned crew hours, the five-day weather forecast and the province's base rate, trained on all ${NSITE} sites before ${D.train_end} and judged on the ten months after. Doubling the portfolio from 15 to ${NSITE} sites lifted ranking quality on the original sites from AUC 0.73 to 0.75; trend features were tested and left out because they added nothing; the tree settings were chosen on a validation window inside the training period. The trained trees ship inside this page, so a day logged on the <b>Log a day</b> tab is scored in your browser with exactly the pipeline's model (scores match Python to six decimal places). Logged days are saved to the page's shared feed and recalibrate the odds as incidents are logged; the next pipeline run (<code>python run_all.py --feed feed.json</code>) retrains on them.</p>
+<p>Gradient-boosted trees on 5-, 10- and 20-day indicator windows, the planned crew hours, the five-day weather forecast and the province's base rate, trained on all ${NSITE} sites before ${D.train_end} and judged on the ten months after. Doubling the portfolio from 15 to ${NSITE} sites lifted ranking quality on the original sites from AUC 0.73 to 0.75; trend features were tested and left out because they added nothing; the tree settings were chosen on a validation window inside the training period. The trained trees ship inside this page, so a day logged on the <b>Full log</b> tab is scored in your browser with exactly the pipeline's model (scores match Python to six decimal places). Logged days are saved to the page's shared feed and recalibrate the odds as incidents are logged; the next pipeline run (<code>python run_all.py --feed feed.json</code>) retrains on them.</p>
 <p>Bands are fixed before the test (each jurisdiction's top 5% red, next 15% amber). Hard rules back the model: a forecast gust of ${D.triggers.gust} km/h or more sets crane, scaffold and roof zones to at least amber, and a wind chill of ${D.triggers.cold} °C does the same for outdoor zones, because the model can't weigh rare weather well. The <b>Apply</b> buttons show what a control is worth: the zone is re-scored with that warning sign returned to its normal level.</p>
 <h3>Limits</h3><ul>
 <li>The leading indicators are simulated: the performance shows what the method can do with data of this kind, not what any real site will see. A pilot on a contractor's own records is the next step.</li>
@@ -2884,6 +3027,8 @@ function show(id) {
 tabs.forEach(a => a.addEventListener("click", e => { e.preventDefault(); show(a.dataset.tab); try { history.replaceState(null, "", "#" + a.dataset.tab); } catch (_) {} }));
 Object.assign(DRAW, DRAW_LATE);
 ["uProv", "phProv"].forEach(id => { const e = document.getElementById(id); if (e) { e.innerHTML = CA.order.map(k => `<option value="${k}">${NMP[k]}</option>`).join(""); e.value = SITE.jur; } });
+try { const dd = JSON.parse(localStorage.getItem("ssew.docs") || "{}"); for (const k in dd) if (dd[k] && /^\d{4}-\d{2}-\d{2}$/.test(dd[k].date)) localDocs[k] = dd[k]; } catch (_) {}
+try { const pp = prClean(JSON.parse(localStorage.getItem("ssew.prog") || "null")); if (pp) { PRG = pp; PROJECT_START = pp.start; } } catch (_) {}
 loadClimate(); WXD = null; { const f = fcSnapshot(); if (f) { const fr = f.filter(w => w.d >= todayLocal()); if (fr.length) applyForecast(fr); } }
 drawSiteBar();
 $("#sbJ").onchange = e => { const j = e.target.value, c0 = CA.jur[j].cities[0]; setSite({ jur: j, city: c0.name, type: c0.type }); };
@@ -2899,7 +3044,7 @@ addEventListener("hashchange", () => show((location.hash || "#live").slice(1)));
 connectFeed(); connectControls(); connectReports();
 drawOrg(); if (D.client) ["#sbJ", "#sbC", "#sbT"].forEach(id => $(id).disabled = true);
 if (ORG) openShow(); else { OS().hidden = false; document.body.style.overflow = "hidden"; setTimeout(() => { if (!ORG && !entered) openForm(); }, 700); }
-orgConnect(); applyZones(); $("#fdEd").onclick = zoneEditor; fiveDay(); scBuildMap();
+orgConnect(); prConnect(); applyZones(); if (PRG && $("#pStart")) { $("#pStart").disabled = true; $("#pStart").value = PRG.start; } $("#fdEd").onclick = zoneEditor; fiveDay(); scBuildMap();
 $("#scGo").onclick = () => runScan(); $("#scSkip").onclick = () => { scanFast = true; };
 $("#bLang").innerHTML = Object.entries(LANGS).map(([k, L]) => `<option value="${k}">${L.name}</option>`).join("");
 </script>
