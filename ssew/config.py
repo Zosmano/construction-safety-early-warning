@@ -1,4 +1,4 @@
-"""Every assumption in one place."""
+﻿"""Every assumption in one place."""
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -43,4 +43,6 @@ RED_SHARE, AMBER_SHARE = 0.05, 0.20   # alert bands: top 5% of zone-days red, ne
 CRANE_GUST_KMH = 50              # tower-crane wind stand-down screen
 HUMIDEX_HEAT = 30                # WorkSafeBC heat-stress screening begins around humidex 30
 FREEZE_C = 1.0                   # ice/frost risk on decks and ramps
+COLD_CHILL_C = -27               # work/warm-up schedule starts near this wind chill (Saskatchewan schedule, Alberta best practice)
+SMOKE_PM25 = 60.0                # live screen only: wildfire smoke, ug/m3 of PM2.5 averaged over the shift (roughly a high AQHI)
 WET_HOURS = 3                    # shift hours with rain, drizzle or showers that make decks and ramps slippery

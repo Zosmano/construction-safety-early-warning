@@ -1,11 +1,11 @@
-"""The site: a hypothetical 24-storey concrete residential tower in Burnaby, BC, simulated zone by zone over a
-30-month programme on real Vancouver shift weather.
+﻿"""The sites: a hypothetical national portfolio in all 10 provinces and 3 territories, simulated zone by zone over a 30-month
+programme on the real shift weather of the hourly station nearest each city.
 
 What is real and what is simulated
-- Real: shift-hour weather (ECCC, YVR), the base injury rate (WorkSafeBC general construction time-loss claims
-  per 100 person-years), the serious-injury share (WorkSafeBC), the mix of injury events (AWCBC construction
-  lost-time claims by event) and the near-miss ratio (Alberta construction potentially serious incidents).
-- Simulated: the site, its schedule and crews, the leading indicators a site would log (near misses, hazard
+- Real: shift-hour weather (ECCC), each jurisdiction's base injury rate (AWCBC claims / Statistics Canada workers; WorkSafeBC for BC),
+  the serious-injury share (WorkSafeBC), the mix of injury events (AWCBC construction lost-time claims by event, 2023-2024) and
+  the near-miss ratio (Alberta construction potentially serious incidents).
+- Simulated: the sites, project types, schedules and crews, the leading indicators a site would log (near misses, hazard
   observations, PPE and housekeeping audits, permits, new workers, overtime, trade congestion) and a latent
   zone "safety climate" that drifts over weeks and drives both the indicators and the incidents.
 The model never sees the latent climate; it has to infer rising risk from the indicators, as a site would.
@@ -13,7 +13,7 @@ The model never sees the latent climate; it has to infer rising risk from the in
 import numpy as np
 import pandas as pd
 
-from . import config as C
+from . import canada as K, config as C
 
 # Zones: id, name, plan polygon (100 x 64 site plan units), hazard families with weights, phases it is busy in
 ZONES = [
@@ -71,38 +71,48 @@ def schedule(days):
 CAP = {"EXC": 28, "CRN": 10, "FRM": 40, "DCK": 34, "SCF": 26, "ROF": 22, "MEP": 38, "INT": 46, "GTE": 12, "LAY": 18}
 
 
-SITES = [  # a national contractor's portfolio (hypothetical): site, province, crew scale relative to the flagship
-    ("Burnaby", "BC", 1.0), ("Surrey", "BC", 0.8), ("Richmond", "BC", 0.9), ("Coquitlam", "BC", 0.7),
-    ("Vancouver", "BC", 1.2), ("North Vancouver", "BC", 0.75), ("New Westminster", "BC", 0.85), ("Langley", "BC", 0.65),
-    ("Toronto", "ON", 1.3), ("Mississauga", "ON", 1.0), ("Vaughan", "ON", 0.9), ("Markham", "ON", 0.8),
-    ("Calgary", "AB", 1.1), ("Airdrie", "AB", 0.7), ("Cochrane", "AB", 0.6),
-    # 15 more sites: doubling the training data lifted test AUC on the original 15 sites from 0.73 to 0.75
-    ("Kelowna", "BC", 0.7), ("Victoria", "BC", 0.8), ("Abbotsford", "BC", 0.6), ("Port Moody", "BC", 0.55),
-    ("Delta", "BC", 0.7), ("Maple Ridge", "BC", 0.6), ("Ottawa", "ON", 1.0), ("Hamilton", "ON", 0.85),
-    ("Brampton", "ON", 1.1), ("Oakville", "ON", 0.7), ("Kitchener", "ON", 0.75), ("Edmonton", "AB", 1.2),
-    ("Red Deer", "AB", 0.6), ("Lethbridge", "AB", 0.55), ("St. Albert", "AB", 0.65),
-]
+SITES = [(c[0], c[1], c[4]) for c in K.CITIES]       # a hypothetical national portfolio: site, jurisdiction, crew scale
+TYPES = dict((c[0], c[5]) for c in K.CITIES)
 FLAGSHIP = "Burnaby"
+# crew in each zone relative to a tower, by project type (assumptions: no public data sets these)
+ARCH = {"tower": {}, "midrise": {"EXC": .6, "CRN": .6, "FRM": .7, "DCK": .6, "SCF": .7, "ROF": .8, "MEP": .8, "INT": .8},
+        "civil": {"EXC": 1.2, "CRN": .6, "FRM": .7, "DCK": 0, "SCF": 0, "ROF": 0, "MEP": .2, "INT": 0, "GTE": 1.2},
+        "industrial": {"EXC": .6, "FRM": .6, "DCK": .5, "ROF": .6, "MEP": 1.3, "INT": .4}}
+PROJECT_TYPES = {"tower": "High-rise building", "midrise": "Low- or mid-rise building", "civil": "Road, bridge or civil works", "industrial": "Industrial or energy plant"}
+
+
+def season(days, prov, kind):
+    """Winter slowdowns (assumption): northern building seasons are short, and civil work slows in the cold months."""
+    m = days.month
+    f = np.ones(len(days))
+    if prov in K.NORTH:
+        f = np.where(np.isin(m, [11, 12, 1, 2, 3, 4]), .35, 1.0)
+    elif kind == "civil":
+        f = np.where(np.isin(m, [12, 1, 2, 3]), .5, 1.0)
+    return f
 
 
 def portfolio(weathers, sources):
-    """Each site runs on its province's real weather and is calibrated to its province's construction claims
-    rate; crews, climate and incidents are its own."""
+    """Each site runs on the real weather of its nearest hourly station and is calibrated to its jurisdiction's construction
+    claims rate; crews, climate and incidents are its own. `weathers`: site -> daily shift weather."""
     out = []
     for k, (name, prov, s) in enumerate(SITES):
-        rate = sources["worksafebc"]["time_loss_rate"] if prov == "BC" else sources["provinces"][prov]["rate"]
-        out.append(simulate(weathers[prov], sources, seed=C.SEED + k, scale=s, rate=rate))
-    df = pd.concat([o[0].assign(site=n, province=p) for o, (n, p, _) in zip(out, SITES)], ignore_index=True)
+        rate = sources["provinces"][prov]["rate"]
+        out.append(simulate(weathers[name], sources, seed=C.SEED + k, scale=s, rate=rate, prov=prov, kind=TYPES[name]))
+    df = pd.concat([o[0].assign(site=n, province=p, project_type=TYPES[n]) for o, (n, p, _) in zip(out, SITES)], ignore_index=True)
     ev = pd.concat([o[1].assign(site=n, province=p) for o, (n, p, _) in zip(out, SITES)], ignore_index=True)
     return df, ev, out[0][2]
 
 
-def simulate(weather, sources, seed=C.SEED, scale=1.0, rate=None):
+def simulate(weather, sources, seed=C.SEED, scale=1.0, rate=None, prov="BC", kind="tower"):
     rng = np.random.default_rng(seed)
     days = pd.bdate_range(C.START, C.END)
-    days = days[days.isin(weather.index)]
-    W = weather.reindex(days)
-    crew = (schedule(days) * scale).round()
+    W = weather.reindex(days).ffill().bfill()          # a station's odd missing day takes the last reading
+    W["snow_or_ice"], W["smoke"] = W.snow_or_ice.astype(bool), W.smoke.astype(bool)
+    crew = schedule(days) * scale * season(days, prov, kind)[:, None]
+    for z, v in ARCH[kind].items():
+        crew[z] = crew[z] * v
+    crew = crew.round()
     n, Z = len(days), len(ZONE_IDS)
 
     # base hazard per worker-hour: BC general construction time-loss rate per 100 person-years
@@ -129,6 +139,7 @@ def simulate(weather, sources, seed=C.SEED, scale=1.0, rate=None):
     freeze = ((W.temp_min.values <= C.FREEZE_C) | W.snow_or_ice.values.astype(bool)).astype(float)
     high_wind = (gust >= C.CRANE_GUST_KMH).astype(float)
     heat = (hum >= C.HUMIDEX_HEAT).astype(float)
+    cold = (W.chill_min.values <= C.COLD_CHILL_C).astype(float)
 
     # pass 1: hazard multipliers; pass 2 rescales them so the whole site runs at BC's construction rate
     zone_data = {}
@@ -149,6 +160,8 @@ def simulate(weather, sources, seed=C.SEED, scale=1.0, rate=None):
             weather_mult *= np.exp(0.5 * heat)
         if zid == "EXC":
             weather_mult *= np.exp(0.5 * wet)              # saturated soil and shoring loads
+        if zid in ("EXC", "CRN", "FRM", "DCK", "SCF", "ROF", "GTE", "LAY"):
+            weather_mult *= np.exp(0.6 * cold)             # assumption: numb hands, brittle gear and rushed work in extreme cold
         logh = (1.3 * climate[:, j] + 1.6 * (new_share - 0.06) + 1.8 * (overtime - 0.05)
                 + 0.06 * np.maximum(trades - 3, 0) + np.log(weather_mult))
         zone_data[zid] = (c, busy, new_share, overtime, trades, np.exp(logh))
@@ -205,6 +218,6 @@ def _weather_tilt(r, fams):
             t[k] = 2.0
         if f == "Fall from height" and r.gust_est >= C.CRANE_GUST_KMH:
             t[k] = 1.6
-        if f == "Exposure (electrical, heat, substances)" and r.humidex_max >= C.HUMIDEX_HEAT:
+        if f == "Exposure (electrical, heat, substances)" and (r.humidex_max >= C.HUMIDEX_HEAT or r.chill_min <= C.COLD_CHILL_C):
             t[k] = 2.0
     return t

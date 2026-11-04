@@ -148,7 +148,7 @@ input[type=number]{width:5.2em}
 @media (prefers-reduced-motion:reduce){.pulse,.evmark,.warnicon,.jib,.ticker .run,.shield,.btn.live i,nav.tabs a .dot{animation:none}.zone{transition:none}}
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--ink2);margin-top:8px}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px}
-.wx{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.wx{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;margin-bottom:12px}
 .wx div{background:var(--plane);border-radius:10px;padding:8px 10px;border:1px solid var(--border)}
 .wx b{display:block;font:800 22px/1.1 var(--f-head)}
 .wx span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -180,6 +180,24 @@ table.form td{padding:4px 6px}
 .status:empty{display:none}
 .status.ok{border-color:var(--green)} .status.warn{border-color:var(--amber)}
 .prose{max-width:84ch} .prose p,.prose li{color:var(--ink2)} .prose h3{margin-top:20px;font-size:17px}
+.sitebar{background:var(--plane);border-bottom:1px solid var(--border)}
+.sb{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding-block:10px;font-size:13.5px}
+.sb label{display:flex;gap:6px;align-items:center;color:var(--muted)}
+.sb select{max-width:230px;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:7px;padding:4px 6px}
+.sbn{color:var(--muted);font-size:12.5px;flex:1 1 240px;min-width:0}
+.mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px}
+.mini button{all:unset;cursor:pointer;display:block;border:1px solid color-mix(in srgb,var(--navy-ink) 25%,transparent);border-radius:8px;padding:6px 8px;color:var(--navy-ink)}
+.mini button:focus-visible{outline:2px solid var(--signal)}
+.mini button[aria-pressed="true"]{background:color-mix(in srgb,var(--signal) 30%,transparent);border-color:var(--signal)}
+.mini b{display:block;font:800 18px/1.1 var(--f-head)} .mini span{display:block;font-size:11px;color:var(--navy-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wxd{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.wxd>div{border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:var(--surface);border-top:5px solid var(--green);min-width:0}
+.wxd>div.hit{border-top-color:var(--amber)} .wxd>div.stop{border-top-color:var(--red)}
+.wxd h4{margin:0 0 4px;font:700 14px var(--f-head)} .wxd .big{font:800 20px/1.2 var(--f-head)} .wxd .s{font-size:12.5px;color:var(--muted)}
+.wxd ul{margin:6px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--ink2)} .wxd li{margin-top:3px}
+.ifgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px}
+.ifgrid label{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13.5px}
+.ifgrid input{width:68px;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:6px;padding:3px 5px}
 footer{background:var(--navy);color:var(--navy-muted);font-size:13px}
 footer .wrap{padding-block:20px 30px}
 footer b{color:var(--navy-ink)}
@@ -190,27 +208,36 @@ footer b{color:var(--navy-ink)}
     <div>
       <div class="eyebrow">Independent construction safety analytics · Canada</div>
       <h1>Site Safety <span>Early Warning</span></h1>
-      <p class="lede">Which zone of a construction site is most likely to hurt someone <b>in the next five work days</b>, the warning signs behind it, and the controls to put in place before the shift. Calibrated to <b>WorkSafeBC</b>, <b>AWCBC</b>, <b>Statistics Canada</b> and <b>Alberta OHS</b> data, run on <b>real Environment Canada weather</b>, and re-scored live as a site logs each day.</p>
-      <p class="indep">Independent analysis by a private analyst. Not produced by, affiliated with or endorsed by WorkSafeBC, the WSIB, Ontario's Ministry of Labour, Alberta OHS or any employer.</p>
+      <p class="lede">Which zone of a construction site is most likely to hurt someone <b>in the next five work days</b>, the warning signs behind it, and the controls to put in place before the shift. Built for <b>all 10 provinces and 3 territories</b>: calibrated to <b>AWCBC</b>, <b>Statistics Canada</b> and provincial board data, run on <b>real Environment Canada weather</b>, tested on <b>165,000 real Ontario inspections</b>, and re-scored as forecasts change and a site logs each day.</p>
+      <p class="indep">Independent analysis by a private analyst. Not produced by, affiliated with or endorsed by any workers' compensation board, regulator or employer.</p>
       <p class="byline">Analysis and design by <b>Osman Zakaria, PMP</b></p>
     </div>
     <div class="prov" id="provCards"></div>
   </div>
   <div class="ticker" aria-label="Early warning signs on the featured day"><div class="lab"><i></i>Early warning signs</div><div class="run" id="ticker"></div></div>
 </header>
+<div class="sitebar" aria-label="Your site"><div class="wrap sb">
+  <b>Your site</b>
+  <label>Province or territory <select id="sbJ"></select></label>
+  <label>City <select id="sbC"></select></label>
+  <label>Project <select id="sbT"></select></label>
+  <span class="sbn" id="sbN"></span>
+</div></div>
 <nav class="tabs" aria-label="Sections"><div class="wrap">
   <a href="#live" data-tab="live">Live site</a>
+  <a href="#weather" data-tab="weather">Live weather</a>
   <a href="#log" data-tab="log">Log a day<span class="dot" aria-hidden="true"></span></a>
   <a href="#ahead" data-tab="ahead">Look-ahead</a>
   <a href="#data" data-tab="data">Your data</a>
   <a href="#photo" data-tab="photo">Photo check</a>
+  <a href="#inspect" data-tab="inspect">Inspection check</a>
   <a href="#report" data-tab="report">Worker voice</a>
   <a href="#forecast" data-tab="forecast">Forecast</a>
   <a href="#premium" data-tab="premium">Premium & COR</a>
   <a href="#films" data-tab="films">Safety films</a>
   <a href="#warnings" data-tab="warnings">Warning record</a>
   <a href="#model" data-tab="model">Does it work?</a>
-  <a href="#provinces" data-tab="provinces">Provinces</a>
+  <a href="#provinces" data-tab="provinces">Canada</a>
   <a href="#evidence" data-tab="evidence">Evidence</a>
   <a href="#method" data-tab="method">Method & sources</a>
 </div></nav>
@@ -255,6 +282,33 @@ footer b{color:var(--navy-ink)}
   </div>
 </section>
 
+<section id="weather" hidden>
+  <h2>Live weather for your site</h2>
+  <p class="sub">Seven days ahead at your city, screened against the triggers that change site work. Applying a forecast feeds it into the zone scores for those dates.</p>
+  <div class="card"><div class="bar">
+      <label>Forecast source <select id="wxProv"><option value="auto">Open-Meteo, no key needed</option><option value="owm">OpenWeather, your key</option><option value="tio">Tomorrow.io, your key</option></select></label>
+      <label id="wxKeyL" hidden>API key <input id="wxKey" type="password" autocomplete="off" style="width:220px"></label>
+      <button class="btn" id="wxGo">Get forecast</button></div>
+    <p class="note" id="wxKeyN" hidden>Your key stays in this browser only, on this device. It is sent only to the service you chose, and it is never saved with the page.</p>
+    <div class="status" id="wxSt" style="margin-top:10px"></div></div>
+  <div class="wxd" id="wxDays" style="margin-top:14px"></div>
+  <div class="card" style="margin-top:14px" id="wxAlertsC"><h3>Weather alerts from Environment Canada</h3><div id="wxAlerts" class="note"></div></div>
+  <div class="card" style="margin-top:14px"><h3>Zones most at risk on your next work day, with this forecast</h3><div class="scroll"><table class="t" id="wxZones"></table></div>
+    <p class="note">Zone scores use typical readings until you log real days. Forecast feels-like temperatures stand in for humidex and wind chill.</p></div>
+  <div class="card" style="margin-top:14px"><h3>The triggers</h3><div class="scroll"><table class="t" id="wxTrig"></table></div>
+    <p class="note">Screening levels only: manufacturer limits, site procedures and the law govern. Open-Meteo's free service is for non-commercial use, so a paid product needs its commercial plan or another provider.</p></div>
+</section>
+
+<section id="inspect" hidden>
+  <h2>Inspection check</h2>
+  <p class="sub">After a site inspection, enter what it found. This model is trained on real records: <span id="iSub"></span>. It estimates the chance of a ministry investigation at the same workplace within 90 days.</p>
+  <div class="grid g2">
+    <div class="card"><h3>Orders or findings on this inspection</h3><div class="ifgrid" id="iCats"></div></div>
+    <div class="card"><h3>Severity and history</h3><div class="ifgrid" id="iHist"></div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><div class="grid g3" id="iOut"></div><p class="note" id="iNote"></p></div>
+</section>
+
 <section id="data" hidden>
   <h2>Score your own site logs</h2>
   <p class="sub">Upload a CSV of your site's daily zone logs and the trained model scores every zone-day: the risk of an injury or high-potential near miss in the next 5 work days, the warning signs behind it and the controls, cited for your province. Add an incidents column and it checks how many of your own incidents it would have flagged in advance. <b>Your file is read in this browser only: it is never uploaded, saved or shared.</b></p>
@@ -265,7 +319,7 @@ footer b{color:var(--navy-ink)}
       <div class="bar" style="margin-top:10px"><button class="btn" id="uTpl">⬇ Download template with example rows</button><button class="btn" id="uDemo">Try the example without downloading</button></div>
       <p class="status" id="uTplStatus" aria-live="polite"></p></div>
     <div class="card"><h3>2 · Upload and score</h3>
-      <div class="bar"><label>Province <select id="uProv"><option value="BC">British Columbia</option><option value="ON">Ontario</option><option value="AB">Alberta</option></select></label>
+      <div class="bar"><label>Province or territory <select id="uProv"></select></label>
         <label>Site name <input id="uSite" placeholder="e.g. Tower B, Surrey" maxlength="60"></label></div>
       <label class="drop" id="uDrop" for="uFile"><b>Drop a .csv file here</b> or choose one<input type="file" id="uFile" accept=".csv,text/csv"></label>
       <p class="status" id="uStatus" aria-live="polite">No file yet.</p>
@@ -354,7 +408,7 @@ footer b{color:var(--navy-ink)}
     <div class="card"><h3>1 · Photos and where they were taken</h3>
       <div class="bar"><label>Zone <select id="phZone"><option value="">Let Claude suggest</option></select></label>
         <label>Date <input type="date" id="phDate"></label>
-        <label>Province <select id="phProv"><option value="BC">British Columbia</option><option value="ON">Ontario</option><option value="AB">Alberta</option></select></label></div>
+        <label>Province or territory <select id="phProv"></select></label></div>
       <label class="drop" id="phDrop" for="phFile"><b>Drop site photos here</b> or choose them<input type="file" id="phFile" accept="image/jpeg,image/png,image/webp" multiple></label>
       <div class="thumbs" id="phThumbs"></div>
       <div class="bar" style="margin-top:10px"><button class="btn primary" id="phGo" disabled>Analyse photos</button><button class="btn" id="phStop" hidden>Stop</button><button class="btn" id="phClear">Clear</button></div>
@@ -385,7 +439,8 @@ footer b{color:var(--navy-ink)}
       <div class="bar"><label>Max gust, next 5 days (km/h) <input type="number" id="fGust" min="0" max="150" value="35"></label>
         <label>Max humidex <input type="number" id="fHum" min="-40" max="50" value="18"></label></div>
       <div class="bar"><label>Wet days ahead <input type="number" id="fWet" min="0" max="5" value="1"></label>
-        <label>Freezing days ahead <input type="number" id="fFreeze" min="0" max="5" value="0"></label></div>
+        <label>Freezing days ahead <input type="number" id="fFreeze" min="0" max="5" value="0"></label>
+        <label>Extreme-cold days ahead <input type="number" id="fCold" min="0" max="5" value="0"></label></div>
       <div class="bar"><button class="btn" id="fPrev">Copy the previous logged day</button><button class="btn" id="fSample">New example for this date</button></div>
       <p class="note">Changing the date fills the crews from the project calendar and the five-day outlook from real 2023–2025 Vancouver weather for that time of year, then scores the day. Each click on <b>New example</b> draws a different day, sometimes with a zone going wrong.</p>
     </div>
@@ -450,6 +505,10 @@ footer b{color:var(--navy-ink)}
 </section>
 
 <section id="model" hidden>
+  <div class="card" style="margin-bottom:16px" id="ontCk"><h2 style="margin-top:0">Real Canadian check: Ontario inspection records</h2>
+    <p class="sub" id="ontSub"></p><div class="grid g3" id="ontT"></div>
+    <div class="grid g2" style="margin-top:12px"><div><h3>Warning signs on the inspection</h3><div class="scroll"><table class="t" id="ontS"></table></div></div>
+    <div><h3>Reading it honestly</h3><ul class="prose" id="ontR"></ul></div></div></div>
   <h2>Does it work?</h2>
   <p class="sub">Judged only on the ten months after training, across 30 sites in three provinces. The comparison that matters is against knowing how many people will be in each zone, which a schedule already tells a superintendent.</p>
   <div class="grid g4" id="mtiles" style="margin-bottom:16px"></div>
@@ -475,26 +534,28 @@ footer b{color:var(--navy-ink)}
 </section>
 
 <section id="provinces" hidden>
-  <h2>Three provinces, one method</h2>
-  <p class="sub">Each province's sites run on its own real weather and are calibrated to its own construction lost-time claims rate (AWCBC claims ÷ Statistics Canada construction employment). Boards differ in coverage and in what counts as lost time, so rates compare each province with itself, not with the others. Controls cite each province's own legislation.</p>
-  <div class="grid g3" id="ptiles" style="margin-bottom:16px"></div>
+  <h2>Thirteen jurisdictions, one method</h2>
+  <p class="sub">Each site runs on the real weather at its nearest hourly station and is calibrated to its jurisdiction's construction lost-time claims rate. Boards differ in coverage and in what counts as lost time, so rates compare a place with itself, not with the others. Controls cite each jurisdiction's own legislation.</p>
+  <div class="card" style="margin-bottom:16px"><h3>Results by jurisdiction (test period, simulated logs)</h3><div class="scroll"><table class="t" id="ptiles"></table></div><p class="note" id="ptNote"></p></div>
   <div class="grid g2">
-    <div class="card"><h3>Construction lost-time claims per 100 workers, 2020–2022</h3><div class="chart" id="prate"></div></div>
-    <div class="card"><h3>Construction fatalities accepted, 2020–2022 (AWCBC)</h3><div class="chart" id="pfat"></div></div>
+    <div class="card"><h3>Construction lost-time claims per 100 workers, median of 2022–2024</h3><div class="chart" id="prate"></div></div>
+    <div class="card"><h3>Construction fatalities accepted, 2022–2024 total (AWCBC; + means small counts were suppressed in some years)</h3><div class="chart" id="pfat"></div></div>
   </div>
-  <div class="card" style="margin-top:16px"><h3>Alert cut-offs set for each province</h3>
-    <p class="note" style="margin-top:0">One shared cut-off under-flagged low-rate Ontario and Alberta: their riskiest zones rarely reached BC-level risk. Each province now alerts at the lower of the shared cut-off and its own top 5% (red) and next 15% (amber) of training zone-days, so no province is flagged less than before.</p>
+  <div class="card" style="margin-top:16px"><h3>Alert cut-offs set for each jurisdiction</h3>
+    <p class="note" style="margin-top:0">One shared cut-off would under-flag low-rate places and over-alert high-rate ones. Each jurisdiction alerts at its own top 5% (red) and next 15% (amber) of zone-days in the last six months before the test, plus the wind and cold rules. Test-period alert shares run higher because the later, busier phases carry more risk.</p>
     <div class="scroll"><table class="t" id="pth"></table></div></div>
   <div class="card" style="margin-top:16px"><h3>Sites in the model (test period)</h3><div class="scroll"><table class="t" id="ptab"></table></div></div>
-  <div class="card" style="margin-top:16px"><h3>The same control, cited for each province</h3><div class="scroll"><table class="t" id="lawtab"></table></div>
-    <p class="note">References point the site's competent person to the governing provision; always check the current text.</p></div>
+  <div class="card" style="margin-top:16px"><h3>The same control, cited for your jurisdiction and two others</h3><div class="scroll"><table class="t" id="lawtab"></table></div>
+    <p class="note">References point the site's competent person to the governing provision. BC, Ontario and Alberta name parts or sections; the other 10 name the instrument and topic, and those topic matches have not been reviewed by a lawyer. Always check the current text.</p></div>
 </section>
 
 <section id="evidence" hidden>
   <h2>The evidence behind the model</h2>
   <div class="grid g2">
     <div class="card"><h3>Work-related death claims, BC general construction (WorkSafeBC)</h3><div class="chart" id="deaths"></div></div>
-    <div class="card"><h3>Lost-time claims in Canadian construction by event, 2021–2022 (AWCBC)</h3><div class="chart" id="mix"></div></div>
+    <div class="card"><h3>Lost-time claims in Canadian construction by event, 2023–2024 (AWCBC)</h3><div class="chart" id="mix"></div></div>
+    <div class="card"><h3>Quebec construction injuries by type, 2022–2023 (CNESST records)</h3><div class="chart" id="qcMix"></div><p class="note" id="qcNote"></p></div>
+    <div class="card"><h3>Ontario construction: critical injuries reported, 2015–2024</h3><div class="chart" id="onCI"></div><p class="note" id="onNote"></p></div>
     <div class="card"><h3>Serious-injury claims rate, BC construction (per 100 person-years)</h3><div class="chart" id="serious"></div></div>
     <div class="card"><h3>Potentially serious incidents, Alberta construction 2020</h3><div class="chart" id="psi"></div><p class="note" id="psinote"></p></div>
   </div>
@@ -535,7 +596,11 @@ const FIELDS_ALL = ["crew", "nm", "obs", "ppe", "house", "new", "ot", "trades", 
 const HIST = { days: D.days.slice(), weather: JSON.parse(JSON.stringify(D.weather)), logs: JSON.parse(JSON.stringify(D.logs)),
   crew: JSON.parse(JSON.stringify(D.crew)), risk: JSON.parse(JSON.stringify(D.risk)), fc: {}, live: new Set(), events: D.events.slice() };
 let H = HIST, PROJ = null, UP = null, view = "hist";   // the live tab shows the recorded history, the viewer's project or their uploaded logs
-const NMP = { BC: "British Columbia", ON: "Ontario", AB: "Alberta" };
+const CA = D.ca, NMP = Object.fromEntries(CA.order.map(k => [k, CA.jur[k].name]));
+const SITE = { jur: "BC", city: "Burnaby", type: "tower" };
+try { const s = JSON.parse(localStorage.getItem("ssew.site") || "null"); if (s && CA.jur[s.jur]) Object.assign(SITE, s); } catch (_) {}
+const siteTh = () => CA.jur[SITE.jur].th, siteRate = () => CA.jur[SITE.jur].rate;
+HIST.prov = "BC"; HIST.base_rate = CA.jur.BC.rate; HIST.th = D.thresholds;
 /* Languages for workers. ui = the near-miss form: title, privacy line, where, what, how bad, minor, serious, fatal,
    send, thanks, "language", "please describe". To be checked by a native speaker before site use. */
 const LANGS = {
@@ -548,6 +613,7 @@ const LANGS = {
   zh: { name: "中文", v: ["zh-CN", "zh-Hans", "zh"], ui: ["报告险情或危险", "匿名：不会记录您的姓名。", "在哪里？", "发生了什么，或您看到了什么？", "可能有多严重？", "轻微", "重伤", "可能致人死亡", "发送报告", "谢谢。您的报告已发送给工地安全团队。", "语言", "请描述发生了什么。"] } };
 const SELF_URL = "https://claude.ai/artifact/7YTTA3WRJAfJstwjaZGdb6";   // this page's link, for the gate QR code (change it in a client's copy)
 const FI = Object.fromEntries(MOD.features.map((f, i) => [f, i]));
+const DRAW_LATE = {};
 function treeScore(x) {
   let s = MOD.baseline;
   for (const t of MOD.trees) { let i = 0; while (t[i][5] === null) { const [f, thr, l, r, ml] = t[i]; const v = x[f]; i = (v === null || Number.isNaN(v)) ? (ml ? l : r) : (v <= thr ? l : r); } s += t[i][5]; }
@@ -571,24 +637,25 @@ function featuresSrc(H, z, i) {                         // any day sequence: {da
   x[FI.crew_now] = L.crew[i] ?? 0;
   const fc = H.fc[H.days[i]];
   if (fc) {                                             // a live-feed day: the supervisor's own plan and forecast
-    x[FI.hours_plan] = (L.crew[i] ?? 0) * 8 * D.horizon; x[FI.gust_fc] = fc.gust; x[FI.humidex_fc] = fc.humidex; x[FI.wet_fc] = fc.wet; x[FI.freeze_fc] = fc.freeze;
+    x[FI.hours_plan] = (L.crew[i] ?? 0) * 8 * D.horizon; x[FI.gust_fc] = fc.gust; x[FI.humidex_fc] = fc.humidex; x[FI.wet_fc] = fc.wet; x[FI.freeze_fc] = fc.freeze; x[FI.cold_fc] = fc.cold ?? 0;
   } else {                                              // history: the planned crew and the forecast (observed weather stands in)
-    let hp = 0, g = -Infinity, hu = -Infinity, we = 0, fr = 0, n = 0; const W = H.weather;
+    let hp = 0, g = -Infinity, hu = -Infinity, we = 0, fr = 0, co = 0, n = 0; const W = H.weather;
     for (let k = i + 1; k <= Math.min(H.days.length - 1, i + D.horizon); k++) {
       if (H.fc[H.days[k]]) break; n++;
       hp += (H.crew[z][k] ?? 0) * 8; g = Math.max(g, W.gust[k] ?? -Infinity); hu = Math.max(hu, W.humidex[k] ?? -Infinity);
-      we += (W.rain[k] ?? 0) >= D.triggers.wet ? 1 : 0; fr += ((W.tmin[k] ?? 9) <= D.triggers.freeze || W.snow[k]) ? 1 : 0;
+      we += (W.rain[k] ?? 0) >= D.triggers.wet ? 1 : 0; fr += ((W.tmin[k] ?? 9) <= D.triggers.freeze || W.snow[k]) ? 1 : 0; co += ((W.chill && W.chill[k]) ?? 9) <= D.triggers.cold ? 1 : 0;
     }
-    x[FI.hours_plan] = hp; x[FI.gust_fc] = n ? g : NaN; x[FI.humidex_fc] = n ? hu : NaN; x[FI.wet_fc] = we; x[FI.freeze_fc] = fr;
+    x[FI.hours_plan] = hp; x[FI.gust_fc] = n ? g : NaN; x[FI.humidex_fc] = n ? hu : NaN; x[FI.wet_fc] = we; x[FI.freeze_fc] = fr; x[FI.cold_fc] = co;
   }
-  x[FI.base_rate] = H.base_rate ?? D.base_rate_bc;
+  x[FI.base_rate] = H.base_rate ?? siteRate();
   ZIDS.forEach(q => x[FI["z_" + q]] = q === z ? 1 : 0);
   return x;
 }
 const scoreX = x => sig(treeScore(x) + CALIB);
-function band(z, p, x, th = H.th || D.thresholds) {
+function band(z, p, x, th = H.th || siteTh()) {
   let b = p >= th.red ? 2 : p >= th.amber ? 1 : 0;
   if (b === 0 && x[FI.gust_fc] >= D.triggers.gust && D.weather_zones["Wind forecast"].includes(z)) b = 1;   // wind stand-down rule
+  if (b === 0 && x[FI.cold_fc] > 0 && D.weather_zones["Extreme cold forecast"].includes(z)) b = 1;   // cold work/warm-up rule
   return b;
 }
 function ablate(z, x, groups) {                        // return the named driver groups to the zone's normal level
@@ -596,17 +663,20 @@ function ablate(z, x, groups) {                        // return the named drive
   groups.forEach(g => MOD.groups[g].forEach(f => y[FI[f]] = med[FI[f]]));
   return y;
 }
+const wxOn = (g, x) => g === "Wind forecast" ? x[FI.gust_fc] >= D.triggers.gust * .8 : g === "Heat forecast" ? x[FI.humidex_fc] >= D.triggers.humidex - 5 : g === "Rain and ice forecast" ? x[FI.wet_fc] + x[FI.freeze_fc] > 0 : g === "Extreme cold forecast" ? x[FI.cold_fc] > 0 : true;   // a forecast is only named as a warning sign when that weather is actually coming
 function driversFor(z, x) {
   const lo = treeScore(x), out = [];
   for (const g of D.drivers) { const d = lo - treeScore(ablate(z, x, [g])); const wz = D.weather_zones[g];
-    if (d > 0.02 && (!wz || wz.includes(z))) out.push([g, d]); }
+    if (d > 0.02 && (!wz || wz.includes(z)) && wxOn(g, x)) out.push([g, d]); }
   out.sort((a, b) => b[1] - a[1]);
   const top = out.slice(0, 3).map(o => D.drivers.indexOf(o[0]));
   if (x[FI.gust_fc] >= D.triggers.gust && D.weather_zones["Wind forecast"].includes(z) && !top.includes(D.drivers.indexOf("Wind forecast"))) top.unshift(D.drivers.indexOf("Wind forecast"));
+  if (x[FI.cold_fc] > 0 && D.weather_zones["Extreme cold forecast"].includes(z) && !top.includes(D.drivers.indexOf("Extreme cold forecast"))) top.unshift(D.drivers.indexOf("Extreme cold forecast"));
   return top.slice(0, 3);
 }
 /* ================================================================== project calendar, seasonal outlook, scenarios */
-const CL = D.climate, clIdx = Object.fromEntries(CL.dates.map((d, i) => [d, i])), YEARS = [2023, 2024, 2025];
+let CL = D.climate, clIdx = Object.fromEntries(CL.dates.map((d, i) => [d, i])), LFC = {};
+const YEARS = [2023, 2024, 2025];
 const ymd = t => t.toISOString().slice(0, 10), dt = s => new Date(s + "T12:00:00Z");
 const todayLocal = () => { const n = new Date(); return ymd(new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate(), 12))); };   // the viewer's calendar day, not UTC's
 const isBiz = s => { const g = dt(s).getUTCDay(); return g > 0 && g < 6; };
@@ -618,18 +688,21 @@ function bizBetween(a, b) {                            // work days in (a, b], b
 let PROJECT_START = "2026-03-02";
 try { PROJECT_START = localStorage.getItem("ssew.start") || PROJECT_START; } catch (_) {}
 const progIdx = d => { let s = PROJECT_START; while (!isBiz(s)) s = addBiz(s, 1); return bizBetween(s, d); };
-const crewAt = (z, d) => { const i = progIdx(d); return i >= 0 && i < D.days.length ? (D.crew[z][i] || 0) : 0; };
+const siteFactor = (z, d) => { const a = CA.arch[SITE.type][z] ?? 1, m = +d.slice(5, 7); const win = [11, 12, 1, 2, 3, 4].includes(m), core = [12, 1, 2, 3].includes(m);
+  return a * (CA.north.includes(SITE.jur) ? (win ? .35 : 1) : SITE.type === "civil" && core ? .5 : 1); };
+const crewAt = (z, d) => { const i = progIdx(d); return i >= 0 && i < D.days.length ? Math.round((D.crew[z][i] || 0) * siteFactor(z, d)) : 0; };
 const phaseAt = d => { const i = progIdx(d); return i < 0 ? "Before the project starts" : i >= D.days.length ? "Project complete" : (phaseOf(D.days[i]) || "Mobilising") + ` · programme day ${i + 1} of ${D.days.length}`; };
-function climateDay(d, y) {                            // the same calendar day in a recorded year (real ECCC weather)
+function climateDay(d, y) {                            // a live forecast where there is one; otherwise the same calendar day in a recorded year (real ECCC weather)
+  if (LFC[d]) return LFC[d];
   let k = y + d.slice(4); if (!(k in clIdx)) k = y + "-02-28"; const i = clIdx[k];
-  return { gust: CL.gust[i], humidex: CL.humidex[i], rain: CL.rain[i], tmin: CL.tmin[i], snow: CL.snow[i] };
+  return { gust: CL.gust[i], humidex: CL.humidex[i], rain: CL.rain[i], tmin: CL.tmin[i], snow: !!CL.snow[i], chill: CL.chill ? CL.chill[i] : 9 };
 }
 function outlook(d) {                                  // five-day outlook for a date: average of the three recorded years
-  const nx = bizRange(addBiz(d, 1), D.horizon); let g = 0, h = 0, w = 0, f = 0;
+  const nx = bizRange(addBiz(d, 1), D.horizon); let g = 0, h = 0, w = 0, f = 0, c = 0;
   YEARS.forEach(y => { const ws = nx.map(q => climateDay(q, y));
     g += Math.max(...ws.map(v => v.gust)); h += Math.max(...ws.map(v => v.humidex)); w += ws.filter(v => v.rain >= D.triggers.wet).length;
-    f += ws.filter(v => v.tmin <= D.triggers.freeze || v.snow).length; });
-  return { gust: Math.round(g / 3), humidex: Math.round(h / 3), wet: Math.round(w / 3), freeze: Math.round(f / 3) };
+    f += ws.filter(v => v.tmin <= D.triggers.freeze || v.snow).length; c += ws.filter(v => v.chill <= D.triggers.cold).length; });
+  return { gust: Math.round(g / 3), humidex: Math.round(h / 3), wet: Math.round(w / 3), freeze: Math.round(f / 3), cold: Math.round(c / 3) };
 }
 const BASE = {};                                       // each zone's typical daily readings, from its history
 ZIDS.forEach(z => { BASE[z] = {}; FIELDS_ALL.forEach(k => { const v = D.logs[z][k].filter((q, i) => q != null && (D.logs[z].crew[i] || 0) > 0); BASE[z][k] = v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0; }); });
@@ -647,7 +720,7 @@ function genDay(z, crew, mult, r) {                    // one day's readings; mu
    worsens through the window), "controls" (controls in place everywhere). Weather: one recorded year. */
 function simulate({ start, n, mode = "typical", focus = "SCF", year = 2024, seed = "" }) {
   const dates = bizRange(addBiz(start, -20), n + 20 + D.horizon), r = rngFor(start + mode + focus + year + seed);
-  const src = { days: dates, logs: {}, crew: {}, weather: { gust: [], humidex: [], rain: [], tmin: [], snow: [] }, fc: {} };
+  const src = { days: dates, logs: {}, crew: {}, weather: { gust: [], humidex: [], rain: [], tmin: [], snow: [], chill: [] }, fc: {}, base_rate: siteRate() };
   dates.forEach(d => { const w = climateDay(d, year); Object.keys(src.weather).forEach(k => src.weather[k].push(w[k])); });
   ZIDS.forEach(z => {
     src.logs[z] = Object.fromEntries(FIELDS_ALL.map(k => [k, []])); src.crew[z] = [];
@@ -666,7 +739,7 @@ function simulate({ start, n, mode = "typical", focus = "SCF", year = 2024, seed
   ZIDS.forEach(z => { out.p[z] = []; out.b[z] = []; out.x[z] = [];
     for (let i = 20; i < 20 + n; i++) { const x = featuresSrc(src, z, i);
       if (!(x[FI.crew_now] > 0 || x[FI.hours_plan] > 0)) { out.p[z].push(null); out.b[z].push(-1); out.x[z].push(null); continue; }
-      const p = scoreX(x); out.p[z].push(p); out.b[z].push(band(z, p, x)); out.x[z].push(x); } });
+      const p = scoreX(x); out.p[z].push(p); out.b[z].push(band(z, p, x, siteTh())); out.x[z].push(x); } });
   return out;
 }
 
@@ -675,7 +748,7 @@ function simulate({ start, n, mode = "typical", focus = "SCF", year = 2024, seed
 let feedDocs = [];
 function contextSrc(doc) {
   const d = doc.date, dates = bizRange(addBiz(d, -20), 21), r = rngFor("ctx" + d);
-  const src = { days: dates, logs: {}, crew: {}, weather: { gust: [], humidex: [], rain: [], tmin: [], snow: [] }, fc: { [d]: doc.weather } };
+  const src = { days: dates, logs: {}, crew: {}, weather: { gust: [], humidex: [], rain: [], tmin: [], snow: [], chill: [] }, fc: { [d]: doc.weather }, base_rate: siteRate() };
   dates.forEach(q => { const w = climateDay(q, 2024); for (const k in src.weather) src.weather[k].push(w[k]); });
   const known = Object.fromEntries(feedDocs.map(f => [f.date, f]));
   ZIDS.forEach(z => { src.logs[z] = Object.fromEntries(FIELDS_ALL.map(k => [k, []])); src.crew[z] = [];
@@ -689,7 +762,7 @@ function scoreDoc(doc) {
   const src = contextSrc(doc), i = src.days.length - 1, out = {};
   ZIDS.forEach(z => { const x = featuresSrc(src, z, i);
     if (!(x[FI.crew_now] > 0 || x[FI.hours_plan] > 0)) { out[z] = null; return; }
-    const p = scoreX(x); out[z] = { r: [p, band(z, p, x), driversFor(z, x)], x }; });
+    const p = scoreX(x); out[z] = { r: [p, band(z, p, x, siteTh()), driversFor(z, x)], x }; });
   return out;
 }
 const LX = {};                                          // live day -> zone -> feature vector (for controls and panels)
@@ -702,10 +775,10 @@ function buildProjection() {
   let s0 = PROJECT_START; while (!isBiz(s0)) s0 = addBiz(s0, 1);
   const dates = bizRange(addBiz(s0, -20), D.days.length + 20), r = rngFor("proj" + s0);
   const known = { ...localDocs, ...Object.fromEntries(feedDocs.map(f => [f.date, f])) };
-  const P = { days: dates, logs: {}, crew: {}, risk: {}, weather: { gust: [], humidex: [], rain: [], tmin: [], snow: [], dir: [] }, fc: {}, live: new Set(), events: [], proj: true };
+  const P = { days: dates, logs: {}, crew: {}, risk: {}, weather: { gust: [], humidex: [], rain: [], tmin: [], snow: [], chill: [], dir: [] }, fc: {}, live: new Set(), events: [], proj: true, prov: SITE.jur, base_rate: siteRate(), th: siteTh() };
   dates.forEach(d => { const ws = YEARS.map(y => climateDay(d, y)), avg = k => ws.reduce((a, w) => a + w[k], 0) / ws.length;
     P.weather.gust.push(avg("gust")); P.weather.humidex.push(avg("humidex")); P.weather.rain.push(Math.round(avg("rain")));
-    P.weather.tmin.push(avg("tmin")); P.weather.snow.push(ws.filter(w => w.snow).length >= 2); P.weather.dir.push(-1);
+    P.weather.tmin.push(avg("tmin")); P.weather.chill.push(Math.min(...ws.map(w => w.chill))); P.weather.snow.push(ws.filter(w => w.snow).length >= 2); P.weather.dir.push(-1);
     const doc = known[d]; if (doc) { P.fc[d] = doc.weather; P.live.add(d); (doc.events || []).forEach(e => P.events.push({ d, z: e.zone, k: e.kind, f: "Logged on site", live: true })); } });
   ZIDS.forEach(z => { P.logs[z] = Object.fromEntries(FIELDS_ALL.map(k => [k, []])); P.crew[z] = []; P.risk[z] = [];
     dates.forEach(d => { const doc = known[d]; let v = doc ? ((doc.zones || {})[z] || null) : genDay(z, crewAt(z, d), 1, r);
@@ -713,19 +786,19 @@ function buildProjection() {
       P.crew[z].push(v ? v.crew : 0); FIELDS_ALL.forEach(k => P.logs[z][k].push(v ? (v[k] ?? null) : (k === "crew" ? 0 : null))); }); });
   ZIDS.forEach(z => dates.forEach((d, i) => { const x = featuresSrc(P, z, i);
     if (i < 20 || !(x[FI.crew_now] > 0 || x[FI.hours_plan] > 0)) { P.risk[z].push(null); return; }
-    const p = scoreX(x), b = band(z, p, x); P.risk[z].push([p, b, b > 0 ? driversFor(z, x) : []]); }));
+    const p = scoreX(x), b = band(z, p, x, siteTh()); P.risk[z].push([p, b, b > 0 ? driversFor(z, x) : []]); }));
   return P;
 }
 const projIdx = d => { const P = PROJ; let i = P.days.findIndex(q => q >= d); return i < 0 ? P.days.length - 1 : Math.max(20, i); };
 function setView(v, date) {                             // switch the live tab between history and the projection
   if (timer) play();
-  view = v; $("#viewNote").textContent = v === "proj" ? `Your project from ${PROJECT_START}: forecast from the programme and the season, with typical readings for each zone. Days logged in the live feed replace the typical readings.` : "Recorded history: the featured site's 30 months with its injuries and near misses.";
+  view = v; $("#viewNote").textContent = v === "proj" ? `Your project in ${SITE.city}, ${NMP[SITE.jur]}, from ${PROJECT_START}: forecast from the programme, the season and any live forecast, with typical readings for each zone. Days logged in the live feed replace the typical readings.` : "Recorded history: the simulated featured site in Burnaby, BC, over 30 months, with its injuries and near misses.";
   if (v === "up" && !UP) v = view = "proj";
   if (v === "proj") { if (!PROJ) PROJ = buildProjection(); H = PROJ; const t = date || todayLocal(); day = projIdx(t < PROJ.days[20] ? PROJ.days[20] : t); }
   else if (v === "up") { H = UP; const i = date ? UP.days.findIndex(d => d >= date) : -1; day = i < 0 ? UP.days.length - 1 : i;
     $("#viewNote").textContent = `Your uploaded logs: ${UP.name}, ${UP.days[0]} to ${UP.days[UP.days.length - 1]} (${NMP[UP.prov]}). Scored in this browser only. Incidents from your file show as ✚.`; }
   else { H = HIST; if (date) { const i = H.days.findIndex(d => d >= date); day = i < 0 ? H.days.length - 1 : i; } else day = Math.min(day, H.days.length - 1); }
-  PROV = H.prov || "BC";
+  PROV = H.prov || SITE.jur;
   document.querySelectorAll("#viewSw button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === v));
   timeline(); render();
 }
@@ -739,11 +812,134 @@ function scoreDay(i) {                                  // (re)score every zone 
 
 /* ================================================================== cover */
 function cover() {
-  const P = S.sources.provinces, fat = p => P[p].fatalities[2022];
-  $("#provCards").innerHTML = [["BC", "British Columbia", `Vancouver weather · ${NBY.BC} sites`], ["ON", "Ontario", `Toronto weather · ${NBY.ON} sites`], ["AB", "Alberta", `Calgary weather · ${NBY.AB} sites`]].map(([k, n, s]) =>
-    `<div class="pcard"><div class="code">${k}</div><div><div class="nm">${n}</div><div class="sm">${s} · ${fat(k) ?? "–"} construction deaths (2022)</div></div>
-     <div class="big">${P[k].rate.toFixed(1)}<small>lost-time claims / 100 workers</small></div></div>`).join("");
+  $("#provCards").innerHTML = `<div class="mini">${CA.order.map(k => `<button data-j="${k}" aria-pressed="${k === SITE.jur}" title="${NMP[k]}"><b>${CA.jur[k].rate.toFixed(1)}</b><span>${NMP[k]}</span></button>`).join("")}</div>
+    <p class="indep" style="margin:8px 0 0">Construction lost-time claims per 100 workers, median of 2022–2024${""}. Boards differ, so compare a place with itself. Choose yours.</p>`;
+  document.querySelectorAll("#provCards button").forEach(b => b.onclick = () => setSite({ jur: b.dataset.j, city: CA.jur[b.dataset.j].cities[0].name, type: CA.jur[b.dataset.j].cities[0].type }));
 }
+/* ================================================================== your site: jurisdiction, city, project type */
+function loadClimate() { const J = CA.jur[SITE.jur]; CL = { ...J.climate, dates: J.dates }; clIdx = Object.fromEntries(J.dates.map((d, i) => [d, i])); }
+const cityOf = () => CA.jur[SITE.jur].cities.find(c => c.name === SITE.city) || CA.jur[SITE.jur].cities[0];
+function drawSiteBar() {
+  const J = CA.jur[SITE.jur], c = cityOf();
+  $("#sbJ").innerHTML = CA.order.map(k => `<option value="${k}"${k === SITE.jur ? " selected" : ""}>${NMP[k]}</option>`).join("");
+  $("#sbC").innerHTML = J.cities.map(x => `<option${x.name === c.name ? " selected" : ""}>${x.name}</option>`).join("");
+  $("#sbT").innerHTML = Object.entries(CA.types).map(([k, n]) => `<option value="${k}"${k === SITE.type ? " selected" : ""}>${n}</option>`).join("");
+  const q = J.quality === "employees only" ? " Workers: Statistics Canada employees only" + (J.combined ? "; NWT and Nunavut report together" : "") + "." : "";
+  $("#sbN").textContent = `${J.rate.toFixed(2)} claims per 100 workers. Law: ${J.law}. Board: ${J.board}.${q} Seasonal weather: real 2023–2025 records.`;
+}
+function setSite(s) {
+  Object.assign(SITE, s); try { localStorage.setItem("ssew.site", JSON.stringify(SITE)); } catch (_) {}
+  LFC = {}; loadClimate(); PROJ = null; drawSiteBar(); cover();
+  ["uProv", "phProv"].forEach(id => { const e = document.getElementById(id); if (e) e.value = SITE.jur; });
+  PM.prov = SITE.jur; if (drawn.premium) { pmForm(); pmRender(); }
+  loadForecast(false).finally(() => { PROJ = null; if (view !== "hist" && view !== "up") setView("proj"); if (drawn.forecast && typeof runForecast === "function") runForecast(false); if (drawn.provinces) DRAW.provinces(); if (iRun) iRun(); });
+}
+/* ================================================================== live weather */
+let iRun = null, WXD = null;                                          // the forecast shown: normalised days, source and time
+const WMO = c => c >= 95 ? "Thunderstorm" : [56, 57, 66, 67].includes(c) ? "Freezing rain" : c >= 71 && c <= 77 || c === 85 || c === 86 ? "Snow" : c >= 51 && c <= 82 ? "Rain" : c === 45 || c === 48 ? "Fog" : c <= 1 ? "Clear" : "Cloud";
+async function getJson(u) { const c = new AbortController(), id = setTimeout(() => c.abort(), 9000); try { const r = await fetch(u, { signal: c.signal }); if (!r.ok) throw new Error("status " + r.status); return await r.json(); } finally { clearTimeout(id); } }
+async function fcOpenMeteo(c) {
+  const base = `latitude=${c.lat}&longitude=${c.lon}&timezone=auto`;
+  const f = await getJson(`https://api.open-meteo.com/v1/forecast?${base}&forecast_days=7&daily=temperature_2m_min,apparent_temperature_min,apparent_temperature_max,wind_gusts_10m_max,precipitation_sum,precipitation_hours,snowfall_sum,weather_code`), d = f.daily;
+  let pm = {}; try { const a = await getJson(`https://air-quality-api.open-meteo.com/v1/air-quality?${base}&forecast_days=5&hourly=pm2_5`), s = {}; a.hourly.time.forEach((t, i) => { const h = +t.slice(11, 13), v = a.hourly.pm2_5[i]; if (v != null && h >= 7 && h <= 15) (s[t.slice(0, 10)] = s[t.slice(0, 10)] || []).push(v); }); for (const k in s) pm[k] = s[k].reduce((x, y) => x + y, 0) / s[k].length; } catch (_) {}
+  return d.time.map((t, i) => ({ d: t, gust: d.wind_gusts_10m_max[i], hi: d.apparent_temperature_max[i], lo: d.apparent_temperature_min[i], tmin: d.temperature_2m_min[i], ph: d.precipitation_hours[i], mm: d.precipitation_sum[i], snow: d.snowfall_sum[i], code: d.weather_code[i], pm: pm[t] ?? null }));
+}
+async function fcOpenWeather(c, key) {
+  const j = await getJson(`https://api.openweathermap.org/data/2.5/forecast?lat=${c.lat}&lon=${c.lon}&units=metric&appid=${encodeURIComponent(key)}`), by = {};
+  j.list.forEach(p => { const t = new Date((p.dt + j.city.timezone) * 1000).toISOString(), k = t.slice(0, 10), o = by[k] = by[k] || { d: k, gust: 0, hi: -99, lo: 99, tmin: 99, ph: 0, mm: 0, snow: 0, code: 3, pm: null };
+    o.gust = Math.max(o.gust, ((p.wind.gust ?? p.wind.speed) || 0) * 3.6); o.hi = Math.max(o.hi, p.main.feels_like); o.lo = Math.min(o.lo, p.main.feels_like); o.tmin = Math.min(o.tmin, p.main.temp_min); const r = (p.rain && p.rain["3h"]) || 0, s = (p.snow && p.snow["3h"]) || 0;
+    o.mm += r + s; o.snow += s / 10; if (r > 0) o.ph += 3; const id = p.weather[0].id; if (id >= 200 && id < 300) o.code = 95; else if (id === 511 && o.code < 95) o.code = 66; else if (id >= 600 && id < 700 && o.code < 66) o.code = 73; else if (id >= 300 && id < 600 && o.code < 51) o.code = 61; });
+  return Object.values(by);
+}
+async function fcTomorrow(c, key) {
+  const j = await getJson(`https://api.tomorrow.io/v4/weather/forecast?location=${c.lat},${c.lon}&timesteps=1h&units=metric&apikey=${encodeURIComponent(key)}`), by = {};
+  j.timelines.hourly.forEach(h => { const v = h.time.slice(0, 10), o = by[v] = by[v] || { d: v, gust: 0, hi: -99, lo: 99, tmin: 99, ph: 0, mm: 0, snow: 0, code: 3, pm: null }, x = h.values;
+    o.gust = Math.max(o.gust, (x.windGust || 0) * 3.6); o.hi = Math.max(o.hi, x.temperatureApparent ?? -99); o.lo = Math.min(o.lo, x.temperatureApparent ?? 99); o.tmin = Math.min(o.tmin, x.temperature ?? 99);
+    const r = x.rainIntensity || 0, s = x.snowIntensity || 0, f = x.freezingRainIntensity || 0; o.mm += r + s + f; o.snow += s / 10; if (r > .1) o.ph++; if (f > 0) o.code = 66; else if (s > 0 && o.code < 66) o.code = 73; else if (r > .1 && o.code < 51) o.code = 61; });
+  return Object.values(by).slice(0, 6);
+}
+const fcSnapshot = () => { const L = CA.live && CA.live.cities && CA.live.cities[SITE.city]; if (!L) return null; return L.d.map((t, i) => ({ d: t, gust: L.gust[i], hi: L.hi[i], lo: L.lo[i], tmin: L.tmin[i], ph: L.ph[i], mm: L.mm[i], snow: L.snow[i], code: L.code[i], pm: L.pm[i] })); };
+function screens(w) {
+  const T = D.triggers, out = [];
+  if (w.gust >= T.gust) out.push(["Crane and high-work wind screen", 2]);
+  if (w.lo <= T.cold) out.push(["Work/warm-up schedule", 2]);
+  if (w.code >= 95) out.push(["Thunderstorm: lightning plan", 2]);
+  if ([56, 57, 66, 67].includes(w.code)) out.push(["Freezing rain: stop work at height", 2]);
+  if (w.pm != null && w.pm >= CA.smoke) out.push(["Smoke: respirators, limit heavy work", 2]);
+  if (w.hi >= T.humidex) out.push(["Heat plan", 1]);
+  if (w.ph >= T.wet) out.push(["Wet decks and ramps", 1]);
+  if (w.tmin <= T.freeze || w.snow > 0) out.push(["Ice and snow on access routes", 1]);
+  return out;
+}
+function applyForecast(days) { LFC = {}; const t = todayLocal(); days.forEach(w => { if (w.d >= t) LFC[w.d] = { gust: w.gust, humidex: Math.max(w.hi, w.tmin), rain: w.ph, tmin: w.tmin, snow: w.snow > 0, chill: w.lo }; }); PROJ = null; }
+async function loadForecast(manual = true) {
+  const c = cityOf(), kind = $("#wxProv") ? $("#wxProv").value : "auto", st = $("#wxSt"); let key = "";
+  try { key = localStorage.getItem("ssew.key." + kind) || ""; } catch (_) {} if ($("#wxKey") && $("#wxKey").value.trim()) { key = $("#wxKey").value.trim(); try { localStorage.setItem("ssew.key." + kind, key); } catch (_) {} }
+  let days = null, src = "", live = false, why = "";
+  try {
+    if (kind === "owm") { if (!key) throw new Error("add your OpenWeather key"); days = await fcOpenWeather(c, key); src = "OpenWeather"; }
+    else if (kind === "tio") { if (!key) throw new Error("add your Tomorrow.io key"); days = await fcTomorrow(c, key); src = "Tomorrow.io"; }
+    else { days = await fcOpenMeteo(c); src = "Open-Meteo"; }
+    live = true;
+  } catch (e) { why = String(e && e.message || e); days = fcSnapshot(); src = CA.live ? CA.live.source : ""; }
+  const today = todayLocal();
+  const fresh = days ? days.filter(w => w.d >= today) : [];
+  WXD = { days: fresh, src, live, why, at: live ? new Date().toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" }) : (CA.live ? CA.live.fetched : "") };
+  if (fresh.length) applyForecast(fresh); else { LFC = {}; PROJ = null; }
+  if (live) loadAlerts(c); else if ($("#wxAlerts")) $("#wxAlerts").textContent = "Alerts need a live connection, which this page's host doesn't allow. See weather.gc.ca.";
+  drawWeather();
+  if (manual && view === "proj") setView("proj");
+  return WXD;
+}
+async function loadAlerts(c) {
+  const e = $("#wxAlerts"); if (!e) return;
+  try { const b = [c.lon - .05, c.lat - .05, c.lon + .05, c.lat + .05].join(","), j = await getJson(`https://api.weather.gc.ca/collections/weather-alerts/items?f=json&limit=20&bbox=${b}`);
+    const a = (j.features || []).map(f => f.properties).filter(p => p.status_en !== "ended"); const seen = new Set();
+    const u = a.filter(p => { const k = p.alert_name_en; if (seen.has(k)) return false; seen.add(k); return true; });
+    e.innerHTML = u.length ? u.map(p => `<p style="margin:4px 0"><b style="text-transform:capitalize">${esc(p.alert_name_en)}</b> · ${esc(p.feature_name_en || "")}<br>${esc((p.alert_text_en || "").slice(0, 260))}</p>`).join("") : `No active alerts for ${esc(c.name)} right now.`;
+  } catch (_) { e.textContent = "Couldn't reach the alerts feed. See weather.gc.ca."; }
+}
+function drawWeather() {
+  if (!$("#wxDays") || !WXD) return; const w = WXD, c = cityOf(), st = $("#wxSt");
+  st.className = "status " + (w.live ? "ok" : "warn");
+  st.textContent = w.live ? `Live forecast for ${c.name} from ${w.src}, fetched ${w.at.replace(/\.$/, "")}. Applied to the zone scores for these dates.`
+    : w.days.length ? `Saved forecast for ${c.name} from ${w.src}, fetched ${w.at}, because a live request wasn't possible here${w.why ? ` (${w.why})` : ""}. A page hosted on claude.ai can't reach other websites; the same page on your own web address gets live forecasts.`
+    : `No current forecast is available here${w.why ? ` (${w.why})` : ""}, so scores use the season's 2023–2025 weather.`;
+  $("#wxDays").innerHTML = w.days.map(x => { const s = screens(x), lv = s.reduce((a, q) => Math.max(a, q[1]), 0);
+    return `<div class="${lv === 2 ? "stop" : lv ? "hit" : ""}"><h4>${new Date(x.d + "T12:00").toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" })}</h4>
+      <div class="big">${Math.round(x.hi)}° / ${Math.round(x.lo)}°</div><div class="s">feels like, high / low · ${WMO(x.code)}</div>
+      <div class="s">Gust ${Math.round(x.gust)} km/h · ${x.ph ? Math.round(x.ph) + " h wet" : "dry"}${x.snow > 0 ? ` · ${x.snow.toFixed(1)} cm snow` : ""}${x.pm != null ? ` · PM2.5 ${Math.round(x.pm)}` : ""}</div>
+      <ul>${s.length ? s.map(q => `<li>${q[1] === 2 ? "■" : "▲"} ${q[0]}</li>`).join("") : "<li>No weather screens</li>"}</ul></div>`; }).join("");
+  // zones on the next work day, scored with this forecast
+  if (!PROJ) PROJ = buildProjection(); const t = todayLocal(), nd = isBiz(t) ? t : addBiz(t, 1), i = PROJ.days.findIndex(d => d >= nd);
+  const rows = i < 20 ? [] : ZIDS.map(z => ({ z, r: PROJ.risk[z][i] })).filter(o => o.r).sort((a, b) => b.r[0] - a.r[0]).slice(0, 5);
+  $("#wxZones").innerHTML = "<tr><th>Zone</th><th class='r'>Chance of an event, next 5 work days</th><th>Alert</th><th>Warning signs</th><th>First control</th></tr>" + (rows.map(o => { const dr = o.r[2].map(k => D.drivers[k]), c0 = dr.length ? D.actions[dr[0]] : D.zone_rule[o.z];
+    return `<tr><td>${zoneById[o.z].name}</td><td class="r">${pct(o.r[0], 1)}</td><td><span class="chip ${BAND[o.r[1]]}">${BAND[o.r[1]]}</span></td><td>${dr.join(", ") || "crew size"}</td><td>${esc(c0.action)}<br><span class="note" style="margin:0">${esc(c0.ref[SITE.jur])}</span></td></tr>`; }).join("") || "<tr><td colspan='5'>No zones working on the next work day under this project calendar. Change the project start on the Live site tab.</td></tr>");
+  const T = D.triggers;
+  $("#wxTrig").innerHTML = "<tr><th>Screen</th><th>Trigger</th><th>Basis</th></tr>" + [["Wind", `gust ${T.gust} km/h`, "Common crane stand-down screen; the manufacturer's limit governs"], ["Heat", `feels like or humidex ${T.humidex}`, "Heat-stress screening usually begins around humidex 30"], ["Cold", `wind chill ${T.cold} °C`, "Work/warm-up schedules start about here (Saskatchewan schedule; Alberta best practice)"], ["Wet", `${T.wet}+ hours of rain in the day`, "Assumption"], ["Ice", `minimum ${T.freeze} °C, or snow`, "Assumption"], ["Smoke", `PM2.5 ${CA.smoke} µg/m³ over the shift`, "Assumption: check the local AQHI"], ["Thunderstorm, freezing rain", "forecast weather code", "Assumption"]].map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+}
+DRAW_LATE.weather = () => {
+  const up = () => { const k = $("#wxProv").value, need = k !== "auto"; $("#wxKeyL").hidden = !need; $("#wxKeyN").hidden = !need; let v = ""; try { v = localStorage.getItem("ssew.key." + k) || ""; } catch (_) {} $("#wxKey").value = v; };
+  $("#wxProv").onchange = up; up(); $("#wxGo").onclick = () => { $("#wxSt").className = "status"; $("#wxSt").textContent = "Fetching…"; loadForecast(true); };
+  drawWeather();
+};
+/* ================================================================== inspection check: a model trained on real Ontario records */
+function ontScore(v) { const m = CA.ontario.model; let s = m.baseline; const x = m.features.map(f => v[f] ?? 0); for (const t of m.trees) { let i = 0; while (t[i][5] === null) { const [f, thr, l, r, ml] = t[i]; const q = x[f]; i = q <= thr ? l : r; } s += t[i][5]; } return 1 / (1 + Math.exp(-s)); }
+DRAW_LATE.inspect = () => {
+  const O = S.ontario, c = CA.ontario, K = {};
+  $("#iSub").textContent = `${fmt(O.inspections)} Ontario construction inspections, ${O.from.slice(0, 4)}–${O.to.slice(0, 4)}, from the Ministry of Labour's published field visits and orders`;
+  $("#iCats").innerHTML = c.cats.filter(k => k !== "Other sections").map(k => `<label>${k}<input type="number" min="0" value="0" data-f="${c.slug[k]}"></label>`).join("") + `<label>Anything else<input type="number" min="0" value="0" data-f="${c.slug["Other sections"]}"></label>`;
+  $("#iHist").innerHTML = [["stop_orders", "Stop-work orders on this visit"], ["forthwith_orders", "Fix-immediately orders on this visit"], ["prior_inspections_wp", "Ministry inspections at this site, past 12 months"], ["prior_inv_wp", "Ministry investigations at this site, past 12 months"], ["prior_visits_con", "Ministry visits to your company's sites, past 12 months"], ["prior_orders_con", "Orders to your company, past 12 months"], ["prior_stops_con", "Stop-work orders to your company, past 12 months"], ["prior_inv_con", "Investigations at your company's sites, past 12 months"]].map(([f, l]) => `<label>${l}<input type="number" min="0" value="0" data-f="${f}"></label>`).join("");
+  const run = () => { const v = {}; document.querySelectorAll("#inspect input[data-f]").forEach(e => v[e.dataset.f] = Math.max(0, +e.value || 0));
+    v.orders_total = c.cats.reduce((a, k) => a + (v[c.slug[k]] || 0), 0); v.con_known = (v.prior_visits_con + v.prior_orders_con) > 0 || v.orders_total > 0 ? 1 : 0; v.month = +todayLocal().slice(5, 7);
+    v.naics_236 = SITE.type === "civil" ? 0 : 1; v.naics_237 = SITE.type === "civil" ? 1 : 0; v.naics_238 = 0; v.gta = ["Toronto", "Mississauga", "Brampton", "Hamilton", "Kitchener", "London", "Windsor", "Barrie"].includes(SITE.city) ? 1 : 0; v.north = ["Sudbury", "Thunder Bay"].includes(SITE.city) ? 1 : 0;
+    const p = ontScore(v), b = p >= c.red ? "red" : p >= c.amber ? "amber" : "green", lift = p / O.test_rate;
+    $("#iOut").innerHTML = `<div class="tile"><div class="k">Chance of an investigation here, next 90 days</div><div class="v sig">${pct(p, 1)}</div><div class="n">${lift.toFixed(1)}× the average inspected workplace (${pct(O.test_rate, 1)})</div></div>
+      <div class="tile"><div class="k">Alert level</div><div class="v"><span class="chip ${b}" style="font-size:15px">${b}</span></div><div class="n">In the 2021–2024 test, red workplaces had ${O.bands[0].lift.toFixed(1)}× the average rate</div></div>
+      <div class="tile"><div class="k">Fix first</div><div class="v" style="font-size:19px">${esc(c.cats.filter(k => k !== "Other sections" && v[c.slug[k]] > 0).sort((a, q) => (O.signs.find(s => s.sign === q) || { ratio: 0 }).ratio - (O.signs.find(s => s.sign === a) || { ratio: 0 }).ratio)[0] || "No findings entered")}</div><div class="n">The finding most linked to later investigations in the test years</div></div>`;
+    $("#iNote").textContent = `An investigation is a proxy: it can follow a complaint, work refusal, critical injury or other event. Inspectors choose where they go, so this describes inspected workplaces. Trained in Ontario${SITE.jur === "ON" ? "" : `, so it is only indicative in ${NMP[SITE.jur]}`}. It doesn't replace a competent person's judgment.`; };
+  document.querySelectorAll("#inspect input[data-f]").forEach(e => e.oninput = run); iRun = run; run();
+};
 function ticker(i) {
   const items = [];
   ZIDS.forEach(z => { const r = H.risk[z][i]; if (!r || r[1] === 0) return;
@@ -923,7 +1119,7 @@ function weatherPanel() {
   const i = day, fc = H.fc[H.days[i]], x = featX("ROF", i), T = D.triggers;
   const cells = [["Gust, next 5 days", isNaN(x[FI.gust_fc]) ? "–" : Math.round(x[FI.gust_fc]) + " km/h", x[FI.gust_fc] >= T.gust],
     ["Humidex, next 5", isNaN(x[FI.humidex_fc]) ? "–" : Math.round(x[FI.humidex_fc]), x[FI.humidex_fc] >= T.humidex],
-    ["Wet days ahead", x[FI.wet_fc], x[FI.wet_fc] > 0], ["Freezing days", x[FI.freeze_fc], x[FI.freeze_fc] > 0]];
+    ["Wet days ahead", x[FI.wet_fc], x[FI.wet_fc] > 0], ["Freezing days", x[FI.freeze_fc], x[FI.freeze_fc] > 0], ["Extreme-cold days", x[FI.cold_fc], x[FI.cold_fc] > 0]];
   $("#wx").innerHTML = cells.map(([k, v, on]) => `<div class="${on ? "on" : ""}"><span>${k}</span><b>${v}</b></div>`).join("");
 }
 
@@ -1043,7 +1239,7 @@ function formInit() {
   $("#fPrev").onclick = copyPrev; $("#fSample").onclick = () => { sampleN++; fillForDate(true); };
   $("#fDate").onchange = () => fillForDate(false);
   $("#fStart").onchange = () => { setStart($("#fStart").value); fillForDate(false); };
-  ["fGust", "fHum", "fWet", "fFreeze"].forEach(id => $("#" + id).addEventListener("change", () => preview()));
+  ["fGust", "fHum", "fWet", "fFreeze", "fCold"].forEach(id => $("#" + id).addEventListener("change", () => preview()));
   $("#fZones").addEventListener("change", () => preview());
   fillForDate(false);
   $("#feAdd").onclick = () => { pendingEvents.push({ zone: $("#feZone").value, kind: $("#feKind").value }); drawEvents(); };
@@ -1066,7 +1262,7 @@ function fillForDate(fresh) {                              // a realistic day fo
   if (fresh || r() < .35) { const k = 1 + Math.floor(r() * 2); for (let j = 0; j < k && active.length; j++) bad.add(active[Math.floor(r() * active.length)]); }
   ZIDS.forEach(z => { const v = genDay(z, crewAt(z, d), bad.has(z) ? 2.4 : 1, r);
     FIELDS.forEach(([k]) => document.getElementById(`f_${z}_${k}`).value = v ? v[k] : (k === "crew" ? 0 : "")); });
-  const o = outlook(d); $("#fGust").value = o.gust; $("#fHum").value = o.humidex; $("#fWet").value = o.wet; $("#fFreeze").value = o.freeze;
+  const o = outlook(d); $("#fGust").value = o.gust; $("#fHum").value = o.humidex; $("#fWet").value = o.wet; $("#fFreeze").value = o.freeze; $("#fCold").value = o.cold;
   pendingEvents = []; drawEvents();
   $("#fPhase").textContent = `${new Date(d + "T12:00").toLocaleDateString("en-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}: ${phaseAt(d)}.`;
   $("#fStatus").textContent = (active.length ? `Filled for ${d}: ${active.length} zones working${bad.size ? `; warning signs building in ${[...bad].map(z => zoneById[z].name).join(" and ")}` : ""}. Edit anything, then save.`
@@ -1077,7 +1273,7 @@ function fillForDate(fresh) {                              // a realistic day fo
 function readForm() {
   const zones = {};
   D.zones.forEach(z => { const v = {}; FIELDS.forEach(([k]) => { const n = parseFloat(document.getElementById(`f_${z.id}_${k}`).value); v[k] = isNaN(n) ? (k === "house" ? 85 : 0) : n; }); zones[z.id] = v; });
-  return { date: $("#fDate").value, weather: { gust: +$("#fGust").value || 0, humidex: +$("#fHum").value || 0, wet: +$("#fWet").value || 0, freeze: +$("#fFreeze").value || 0 },
+  return { date: $("#fDate").value, weather: { gust: +$("#fGust").value || 0, humidex: +$("#fHum").value || 0, wet: +$("#fWet").value || 0, freeze: +$("#fFreeze").value || 0, cold: +$("#fCold").value || 0 },
     zones, events: pendingEvents.slice() };
 }
 function applyDoc(doc) {                                   // add (or replace) a logged day in the history and score it
@@ -1086,7 +1282,7 @@ function applyDoc(doc) {                                   // add (or replace) a
     const ins = a => a.splice(i, 0, null);
     ZIDS.forEach(z => { Object.values(H.logs[z]).forEach(ins); ins(H.risk[z]); H.crew[z].splice(i, 0, 0); });
     Object.keys(H.weather).forEach(k => H.weather[k].splice(i, 0, null)); }
-  H.fc[doc.date] = { gust: doc.weather.gust, humidex: doc.weather.humidex, wet: doc.weather.wet, freeze: doc.weather.freeze };
+  H.fc[doc.date] = { gust: doc.weather.gust, humidex: doc.weather.humidex, wet: doc.weather.wet, freeze: doc.weather.freeze, cold: doc.weather.cold || 0 };
   H.weather.gust[i] = doc.weather.gust; H.weather.dir[i] = -1;
   ZIDS.forEach(z => { const v = (doc.zones || {})[z] || { crew: 0 }; const busy = v.crew > 0;
     H.crew[z][i] = v.crew || 0;
@@ -1216,25 +1412,31 @@ const DRAW = {
     nycCheck();
   },
   provinces() {
-    const P = S.sources.provinces, B = S.by_province, NM = { BC: "British Columbia", ON: "Ontario", AB: "Alberta" };
-    $("#ptiles").innerHTML = ["BC", "ON", "AB"].map(k => `<div class="tile"><div class="k">${NM[k]}</div><div class="v">${pct(B[k].warned)}</div>
-      <div class="n">of ${B[k].events} test events flagged in advance · AUC ${B[k].auc.toFixed(2)} · simulated rate ${B[k].sim_rate.toFixed(2)} vs real ${B[k].target_rate.toFixed(2)}</div></div>`).join("");
-    hbars("#prate", ["BC", "AB", "ON"].map(k => ({ k: NM[k], v: P[k].rate, t: P[k].rate.toFixed(2), c: css("--signal") })), { l: 150 });
-    const fat = ["BC", "ON", "AB"].flatMap(k => [2020, 2021, 2022].map(y => ({ k: `${k} ${String(y).slice(2)}`, v: P[k].fatalities[y] || 0, c: css(k === "BC" ? "--navy2" : k === "ON" ? "--blue" : "--violet") })));
-    vbars("#pfat", fat);
+    const P = S.sources.provinces, B = S.by_province, O = CA.order;
+    $("#ptiles").innerHTML = "<tr><th>Jurisdiction</th><th class='r'>Claims per 100 workers</th><th class='r'>Claims 2022 / 23 / 24</th><th class='r'>Sites</th><th class='r'>Test events</th><th class='r'>Flagged in advance</th><th class='r'>AUC</th><th class='r'>AUC, left out of training</th><th class='r'>Alerts per site-week</th></tr>" +
+      O.map(k => { const b = B[k], p = P[k], c = p.claims; return `<tr${k === SITE.jur ? " style='font-weight:700'" : ""}><td>${NMP[k]}${p.combined ? " *" : ""}</td><td class="r">${p.rate.toFixed(2)}</td><td class="r">${[2022, 2023, 2024].map(y => fmt(c[y])).join(" / ")}</td><td class="r">${b.sites}</td><td class="r">${b.events}</td><td class="r">${b.events ? pct(b.warned) : "–"}</td><td class="r">${b.auc ? b.auc.toFixed(2) : "–"}</td><td class="r">${b.auc_left_out ? b.auc_left_out.toFixed(2) : "–"}</td><td class="r">${b.alerts_per_site_week.toFixed(1)}</td></tr>`; }).join("");
+    $("#ptNote").textContent = `* NWT and Nunavut report claims together, so both use the combined figure. Rates use the median of 2022–2024 because Ontario's 2024 count is ${pct(S.canada.ontario_2024_jump)} above 2023. Workers: Labour Force Survey in the provinces, and Statistics Canada payroll employees in the territories, which leaves out the self-employed and can miss crews from the south, so territorial rates are less certain. Small test counts swing widely. Logs are simulated everywhere, so these figures show the method's reach, not results on real sites.`;
+    hbars("#prate", O.slice().sort((a, b) => P[b].rate - P[a].rate).map(k => ({ k: NMP[k], v: P[k].rate, t: P[k].rate.toFixed(2), c: css(k === SITE.jur ? "--red" : "--signal") })), { l: 190 });
+    hbars("#pfat", O.filter(k => !(k === "NU")).map(k => ({ k: k === "NT" ? "NWT and Nunavut" : NMP[k], v: [2022, 2023, 2024].reduce((a, y) => a + (P[k].fatalities[y] || 0), 0), part: [2022, 2023, 2024].some(y => P[k].fatalities[y] == null) })).sort((a, b) => b.v - a.v).map(o => ({ ...o, t: o.v + (o.part ? "+" : ""), c: css("--navy2") })), { l: 190 });
     const TP = S.thresholds.pooled;
-    $("#pth").innerHTML = "<tr><th>Province</th><th class='r'>Red at</th><th class='r'>Amber at</th><th class='r'>Flagged in advance: shared → own</th><th class='r'>Alerts per site-week: shared → own</th><th class='r'>Event rate on red days</th></tr>" +
-      ["BC", "ON", "AB"].map(k => { const b = B[k], t = b.thresholds;
-        return `<tr><td><b>${NM[k]}</b></td><td class="r">${pct(t.red, 1)}${t.red < TP.red ? "" : " (shared)"}</td><td class="r">${pct(t.amber, 1)}</td>
-        <td class="r">${pct(b.warned_pooled)} → <b>${pct(b.warned)}</b></td><td class="r">${b.alerts_per_site_week_pooled.toFixed(1)} → ${b.alerts_per_site_week.toFixed(1)}</td><td class="r">${b.red_lift.toFixed(1)}× average</td></tr>`; }).join("") +
+    $("#pth").innerHTML = "<tr><th>Jurisdiction</th><th class='r'>Red at</th><th class='r'>Amber at</th><th class='r'>Flagged in advance: shared → own</th><th class='r'>Alerts per site-week: shared → own</th><th class='r'>Event rate on red days</th></tr>" +
+      O.map(k => { const b = B[k], t = b.thresholds;
+        return `<tr><td><b>${NMP[k]}</b></td><td class="r">${pct(t.red, 1)}</td><td class="r">${pct(t.amber, 1)}</td>
+        <td class="r">${b.events ? `${pct(b.warned_pooled)} → <b>${pct(b.warned)}</b>` : "–"}</td><td class="r">${b.alerts_per_site_week_pooled.toFixed(1)} → ${b.alerts_per_site_week.toFixed(1)}</td><td class="r">${b.red_lift != null ? b.red_lift.toFixed(1) + "× average" : "–"}</td></tr>`; }).join("") +
       `<tr><td>All ${NSITE} sites</td><td class="r">shared: ${pct(TP.red, 1)}</td><td class="r">${pct(TP.amber, 1)}</td><td class="r">${pct(S.metrics_pooled.warned_share)} → <b>${pct(M.warned_share)}</b></td><td class="r">${(S.metrics_pooled.alerts_per_site_week.red + S.metrics_pooled.alerts_per_site_week.amber).toFixed(1)} → ${(M.alerts_per_site_week.red + M.alerts_per_site_week.amber).toFixed(1)}</td><td class="r"></td></tr>`;
-    $("#ptab").innerHTML = "<tr><th>Site</th><th>Province</th><th class='r'>Person-hours</th><th class='r'>Events</th><th class='r'>Injuries</th><th class='r'>Flagged in advance</th><th class='r'>Red zone-days</th><th class='r'>Amber zone-days</th></tr>" +
-      S.by_site.map(s => `<tr${s.site === D.flagship ? " style='font-weight:700'" : ""}><td>${s.site}${s.site === D.flagship ? " (featured)" : ""}</td><td>${s.province}</td><td class="r">${fmt(s.person_hours)}</td><td class="r">${s.events}</td><td class="r">${s.injuries}</td><td class="r">${pct(s.warned)}</td><td class="r">${s.red_days}</td><td class="r">${s.amber_days}</td></tr>`).join("");
-    $("#lawtab").innerHTML = "<tr><th>Control</th><th>British Columbia</th><th>Ontario</th><th>Alberta</th></tr>" +
-      Object.entries(D.zone_rule).map(([z, r]) => `<tr><td><b>${zoneById[z].name}</b><br>${esc(r.action)}</td><td>${esc(r.ref.BC)}</td><td>${esc(r.ref.ON)}</td><td>${esc(r.ref.AB)}</td></tr>`).join("");
+    $("#ptab").innerHTML = "<tr><th>Site</th><th>Jurisdiction</th><th>Project</th><th>Nearest hourly station</th><th class='r'>Person-hours</th><th class='r'>Events</th><th class='r'>Injuries</th><th class='r'>Flagged in advance</th><th class='r'>Red zone-days</th><th class='r'>Amber zone-days</th></tr>" +
+      S.by_site.map(s => { const ci = CA.jur[s.province].cities.find(c => c.name === s.site) || {}; return `<tr${s.site === D.flagship ? " style='font-weight:700'" : ""}><td>${s.site}${s.site === D.flagship ? " (featured)" : ""}</td><td>${s.province}</td><td>${CA.types[ci.type] || ""}</td><td>${ci.station || ""}${ci.km != null ? ` (${ci.km} km)` : ""}</td><td class="r">${fmt(s.person_hours)}</td><td class="r">${s.events}</td><td class="r">${s.injuries}</td><td class="r">${s.events ? pct(s.warned) : "–"}</td><td class="r">${s.red_days}</td><td class="r">${s.amber_days}</td></tr>`; }).join("");
+    const LJ = [SITE.jur, ...["QC", "NU", "ON"].filter(k => k !== SITE.jur)].slice(0, 3);
+    $("#lawtab").innerHTML = `<tr><th>Control</th>${LJ.map(k => `<th>${NMP[k]}</th>`).join("")}</tr>` +
+      Object.entries(D.zone_rule).map(([z, r]) => `<tr><td><b>${zoneById[z].name}</b><br>${esc(r.action)}</td>${LJ.map(k => `<td>${esc(r.ref[k])}</td>`).join("")}</tr>`).join("");
   },
   evidence() {
     const src = S.sources;
+    const QC = S.canada.quebec, OO = S.canada.ontario_outcomes;
+    hbars("#qcMix", Object.entries(QC.family_mix).map(([k, v]) => ({ k, v, t: pct(v, 1), c: css("--amber") })), { l: 250 });
+    $("#qcNote").textContent = `${fmt(QC.records - QC.covid_removed - QC.hearing_loss)} real injury records, leaving out ${QC.covid_removed} COVID-19 records and ${QC.hearing_loss} hearing-loss claims. Records have no dates, so they set the injury mix, not when injuries happen.`;
+    vbars("#onCI", Object.entries(OO.critical_injuries).map(([k, v]) => ({ k: k.slice(2), v, c: css("--red") })));
+    $("#onNote").textContent = `Ministry of Labour figures. Construction fatalities over the same years: ${Object.values(OO.fatalities).join(", ")}. A rise in reports can reflect reporting as well as harm.`;
     vbars("#deaths", Object.entries(src.deaths_by_year).map(([k, v]) => ({ k: k.slice(2), v, c: css("--red") })));
     hbars("#mix", Object.entries(src.event_mix).map(([k, v]) => ({ k, v, t: pct(v, 1), c: css("--amber") })), { l: 250 });
     vbars("#serious", Object.entries(src.serious_rate).map(([k, v]) => ({ k, v, t: v.toFixed(2), c: css("--blue") })));
@@ -1247,12 +1449,12 @@ const DRAW = {
     const src = S.sources, P = src.provinces;
     $("#mbody").innerHTML = `<h2>Model card</h2>
 <div class="scroll"><table class="t"><tr><th style="width:190px">Intended use</th><td>Pre-shift planning on a construction site: rank zones by the risk of an injury or high-potential near miss in the next ${D.horizon} work days, show the warning signs, and prompt controls. For superintendents, safety coordinators and joint health and safety committees; for regulators, a demonstration of what leading-indicator data can do.</td></tr>
-<tr><th>Not for</th><td>Discipline or performance reviews of workers or crews; deciding that a green zone needs no controls; replacing the competent person, the site's safety program, inspections or the law; comparing provinces' safety records.</td></tr>
+<tr><th>Not for</th><td>Discipline or performance reviews of workers or crews; deciding that a green zone needs no controls; replacing the competent person, the site's safety program, inspections or the law; comparing jurisdictions' safety records.</td></tr>
 <tr><th>Inputs</th><td>Daily zone logs a site already keeps (crew, near-miss reports, hazard observations, PPE gaps, housekeeping, new workers, overtime, trades, permit issues), the crew plan, and the 5-day weather outlook. No personal information.</td></tr>
-<tr><th>Model</th><td>Gradient-boosted trees (300) trained on 15 simulated sites to ${D.train_end}; exported to the page, which scores in the browser with no server. Bands per province: red at the top 5%, amber at the next 15% of training zone-days (never above the portfolio cut-off), plus a wind stand-down rule.</td></tr>
-<tr><th>Performance (test period)</th><td>${pct(M.warned_share)} of ${M.events_test} events flagged amber or red in the 5 work days before; AUC ${M.auc.toFixed(2)} (crew plan alone ${M.auc_base.toFixed(2)}); events on red zone-days ${(M.bands[0].lift).toFixed(1)}× the average. By province: BC ${pct(S.by_province.BC.warned)}, Alberta ${pct(S.by_province.AB.warned)}, Ontario ${pct(S.by_province.ON.warned)}.</td></tr>
+<tr><th>Model</th><td>Gradient-boosted trees (300) trained on ${NSITE} simulated sites in all 13 jurisdictions to ${D.train_end}; exported to the page, which scores in the browser with no server. Bands per jurisdiction: red at the top 5%, amber at the next 15% of zone-days in the last six training months, plus wind and cold rules. A second model, on the Inspection check tab, is trained on real Ontario records.</td></tr>
+<tr><th>Performance (test period)</th><td>${pct(M.warned_share)} of ${M.events_test} events flagged amber or red in the 5 work days before; AUC ${M.auc.toFixed(2)} (crew plan alone ${M.auc_base.toFixed(2)}); events on red zone-days ${(M.bands[0].lift).toFixed(1)}× the average. The Canada tab gives each jurisdiction's result.</td></tr>
 <tr><th>Forecasts</th><td>Beyond the logged days, "Your project" and the Forecast tab assume typical readings for each zone and the seasonal weather of 2023–2025. They show the risk that comes from the schedule and the season; logging real days replaces the assumptions.</td></tr>
-<tr><th>Limits</th><td>The leading indicators are simulated (calibrated to real WorkSafeBC, AWCBC, Statistics Canada and Alberta OHS figures); a pilot on a contractor's own records is needed before relying on it. About 1 in 5 events had no warning. Gusts are estimated from hourly wind (×1.5).</td></tr>
+<tr><th>Limits</th><td>The leading indicators are simulated (calibrated to real WorkSafeBC, AWCBC, Statistics Canada and Alberta OHS figures); a pilot on a contractor's own records is needed before relying on it. ${pct(1 - M.warned_share)} of test events had no warning. Weather effects, project types and winter slowdowns are assumptions. Gusts in the record are estimated from hourly wind (×1.5).</td></tr>
 <tr><th>Photo check</th><td>Claude (vision) drafts hazard findings from site photos on the viewer's own Claude account; the page does not keep the photos. Findings change only three readings the model already uses (hazard observations, PPE gaps, housekeeping), and every control and citation comes from the page's own library. Findings are a draft for a competent person to confirm; photo locations are approximate.</td></tr>
 <tr><th>Look-ahead</th><td>Clash checks are explicit rules (wind at ${D.triggers.gust} km/h for lifts, steel, scaffold and roofing; humidex ${D.triggers.humidex}+; ${D.triggers.wet}+ hours of rain; frost; lifts over working crews; three or more activities in one zone; hot work beside other trades). Zone risk uses the trained model on the planned crews and the weather entered.</td></tr>
 <tr><th>Premium estimate</th><td>An estimate, not a quote: claims avoided = expected claims × share flagged × the share you assume is prevented. Premium effect uses a simplified experience-rating share; each board's formula is more involved and lags. Board claim costs are shown separately because the board, not the employer, pays them.</td></tr>
@@ -1263,22 +1465,30 @@ const DRAW = {
 <p>A superintendent already knows who will be on site. This system answers <b>where</b> the next injury is building up, early enough to stop it. Each work day, for each of ten zones, it estimates the probability of an injury or a high-potential near miss in the next ${D.horizon} work days, names the warning signs behind it, and turns them into controls cited for the site's province.</p>
 <h3>What is real</h3><ul>
 <li><b>BC base rate</b>: general construction, ${src.time_loss_rate} time-loss claims per 100 person-years (WorkSafeBC <i>Statistics 2024</i>); serious-injury rate ${src.serious_rate[2024]} (2024); 2024 claims mix and death descriptions.</li>
-<li><b>Ontario and Alberta base rates</b>: accepted construction lost-time claims (AWCBC, 2020–2022) ÷ construction employment (Statistics Canada, Labour Force Survey table 14-10-0023): ON ${P.ON.rate.toFixed(2)}, AB ${P.AB.rate.toFixed(2)}, BC ${P.BC.rate.toFixed(2)} per 100 workers. Boards differ in coverage and lost-time definitions, so each province is compared with itself.</li>
-<li><b>Injury mix</b>: AWCBC construction lost-time claims by event, 2021–2022. <b>Fatalities</b>: AWCBC construction fatalities by province, 2020–2022.</li>
+<li><b>The other 12 base rates</b>: accepted construction lost-time claims (AWCBC, median of 2022–2024) ÷ construction employment (Labour Force Survey in the provinces, payroll employees in the territories). Boards differ in coverage and lost-time definitions, so each jurisdiction is compared with itself.</li>
+<li><b>Injury mix</b>: AWCBC construction lost-time claims by event, 2023–2024. <b>Fatalities</b>: AWCBC, 2022–2024. <b>Quebec</b>: ${fmt(S.canada.quebec.records)} CNESST construction injury records, 2022–2023. <b>Ontario</b>: construction fatalities and critical injuries, 2015–2024, and ${fmt(S.ontario.rows_source)} rows of field visits and orders, 2012–2024.</li>
 <li><b>Near misses</b>: Alberta's potentially serious incidents in construction, 2020: ${pct(1 - src.alberta_psi.share_with_injury)} hurt no one.</li>
-<li><b>Weather</b>: Environment and Climate Change Canada hourly observations at Vancouver, Toronto and Calgary international airports, shift hours, 2023–2025.</li></ul>
+<li><b>Weather</b>: Environment and Climate Change Canada hourly observations at the station nearest each site, shift hours, 2023–2025. Live forecasts: Open-Meteo, or OpenWeather and Tomorrow.io with your own key; alerts from Environment Canada's MSC GeoMet service.</li></ul>
+<h3>Reviewed and left out</h3><ul><li>The federal Employer's Annual Hazardous Occurrence Report files cover air, rail, water, ports and the federal public service, not construction.</li><li>WSIB fatal-claim investigation counts cover all industries and stopped in 2021.</li><li>Synthetic logs aren't real evidence, so they aren't used to report results.</li></ul>
 <h3>What is simulated</h3>
-<p>${NSITE} hypothetical sites (${NBY.BC} in BC, ${NBY.ON} in Ontario, ${NBY.AB} in Alberta) and their daily logs: crews by zone, near-miss reports, hazard observations, PPE and housekeeping audits, permit issues, new workers, overtime and trade congestion. A hidden safety climate in each zone drifts and sometimes deteriorates (a new subcontractor, a schedule crunch); it drives both the logs and the incidents, and the model never sees it.</p>
+<p>${NSITE} hypothetical sites across all 13 jurisdictions, in four project types, and their daily logs: crews by zone, near-miss reports, hazard observations, PPE and housekeeping audits, permit issues, new workers, overtime and trade congestion. A hidden safety climate in each zone drifts and sometimes deteriorates (a new subcontractor, a schedule crunch); it drives both the logs and the incidents, and the model never sees it.</p>
 <h3>The model and the live feed</h3>
 <p>Gradient-boosted trees on 5-, 10- and 20-day indicator windows, the planned crew hours, the five-day weather forecast and the province's base rate, trained on all ${NSITE} sites before ${D.train_end} and judged on the ten months after. Doubling the portfolio from 15 to ${NSITE} sites lifted ranking quality on the original sites from AUC 0.73 to 0.75; trend features were tested and left out because they added nothing; the tree settings were chosen on a validation window inside the training period. The trained trees ship inside this page, so a day logged on the <b>Log a day</b> tab is scored in your browser with exactly the pipeline's model (scores match Python to six decimal places). Logged days are saved to the page's shared feed and recalibrate the odds as incidents are logged; the next pipeline run (<code>python run_all.py --feed feed.json</code>) retrains on them.</p>
-<p>Bands are fixed on the training period (top 5% red, next 15% amber). A hard rule backs the model on wind: a forecast gust of ${D.triggers.gust} km/h or more sets crane, scaffold and roof zones to at least amber, because wind incidents are too rare for the model to weigh. The <b>Apply</b> buttons show what a control is worth: the zone is re-scored with that warning sign returned to its normal level.</p>
+<p>Bands are fixed before the test (each jurisdiction's top 5% red, next 15% amber). Hard rules back the model: a forecast gust of ${D.triggers.gust} km/h or more sets crane, scaffold and roof zones to at least amber, and a wind chill of ${D.triggers.cold} °C does the same for outdoor zones, because the model can't weigh rare weather well. The <b>Apply</b> buttons show what a control is worth: the zone is re-scored with that warning sign returned to its normal level.</p>
 <h3>Limits</h3><ul>
 <li>The leading indicators are simulated: the performance shows what the method can do with data of this kind, not what any real site will see. A pilot on a contractor's own records is the next step.</li>
 <li>Gusts are estimated from hourly mean wind (×1.5); observed weather stands in for the forecast in history.</li>
+<li>Citations outside BC, Ontario and Alberta name the instrument and topic, and need a legal review. Controls and worker materials also need French-language review for Quebec, and Inuktut needs in Nunavut aren't covered.</li>
 <li>Regulation references point to the governing provision; check the current text. This is independent work, not affiliated with any regulator.</li></ul>
 <h3>Sources</h3><ul>
 <li><a href="https://www.worksafebc.com/en/about-us/data-insights/statistical-reports" target="_blank" rel="noopener">WorkSafeBC, Statistics 2024</a></li>
-<li><a href="https://awcbc.org/data-and-statistics/national-work-injury-disease-statistics-program" target="_blank" rel="noopener">AWCBC, National Work Injury, Disease and Fatality Statistics 2020–2022</a></li>
+<li><a href="https://awcbc.org/data-and-statistics/national-work-injury-disease-statistics-program" target="_blank" rel="noopener">AWCBC, National Work Injury, Disease and Fatality Statistics 2022–2024</a></li>
+<li><a href="https://data.ontario.ca/dataset/occupational-health-and-safety-field-visits-workplaces-visited-and-orders-issued" target="_blank" rel="noopener">Ontario Ministry of Labour, field visits, workplaces visited and orders issued</a></li>
+<li><a href="https://www.donneesquebec.ca/recherche/dataset/lesions-professionnelles" target="_blank" rel="noopener">CNESST, lésions professionnelles open data</a> (records supplied as files)</li>
+<li><a href="https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1410020101" target="_blank" rel="noopener">Statistics Canada, Table 14-10-0201-01, employees by industry</a></li>
+<li><a href="https://www.worksafesask.ca/prevention/environmental-risks/working-in-cold-weather/" target="_blank" rel="noopener">WorkSafe Saskatchewan, working in cold weather</a></li>
+<li><a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener">Open-Meteo</a> · <a href="https://openweathermap.org/forecast5" target="_blank" rel="noopener">OpenWeather</a> · <a href="https://docs.tomorrow.io/reference/weather-forecast" target="_blank" rel="noopener">Tomorrow.io</a> · <a href="https://api.weather.gc.ca/collections/weather-alerts" target="_blank" rel="noopener">MSC GeoMet alerts</a></li>
+<li>Further public sources worth adding: <a href="https://www.alberta.ca/employer-records-using-database" target="_blank" rel="noopener">Alberta employer records</a>, <a href="https://www.ihsa.ca/statistics_research/injury_performance.aspx" target="_blank" rel="noopener">IHSA injury performance</a>, and <a href="https://iwh.on.ca/node/175" target="_blank" rel="noopener">COR evaluation studies</a>.</li>
 <li><a href="https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1410002301" target="_blank" rel="noopener">Statistics Canada, Table 14-10-0023-01, Labour force characteristics by industry, annual</a></li>
 <li><a href="https://open.alberta.ca/publications/potential-serious-incidents-reporting-psi-wcb-sector-report-2020" target="_blank" rel="noopener">Government of Alberta, Potentially Serious Incidents: construction, 2020</a></li>
 <li><a href="https://climate.weather.gc.ca/" target="_blank" rel="noopener">Environment and Climate Change Canada, historical climate data</a></li>
@@ -1297,7 +1507,7 @@ function runForecast(animate = true) {
   const P = {}, Bd = {}, E = {}, Pany = {}, peak = {};
   ZIDS.forEach(z => {
     P[z] = dates.map((_, i) => { const v = runs.map(r => r.p[z][i]).filter(v => v != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; });
-    Bd[z] = dates.map((_, i) => { if (P[z][i] == null) return -1; let b = P[z][i] >= D.thresholds.red ? 2 : P[z][i] >= D.thresholds.amber ? 1 : 0;
+    Bd[z] = dates.map((_, i) => { if (P[z][i] == null) return -1; let b = P[z][i] >= siteTh().red ? 2 : P[z][i] >= siteTh().amber ? 1 : 0;
       if (b === 0 && runs.filter(r => r.b[z][i] >= 1).length >= 2) b = 1; return b; });
     const h = P[z].map(p => p == null ? 0 : 1 - Math.pow(1 - p, 1 / D.horizon));
     E[z] = h.reduce((a, b) => a + b, 0); Pany[z] = 1 - h.reduce((a, b) => a * (1 - b), 1);
@@ -1320,8 +1530,8 @@ function drawFcHeat(animate) {
   F.dates.forEach((d, i) => { if (i === 0 || dt(d).getUTCDay() === 1) el("text", { x: L + i * cw, y: 20 }, svg).textContent = d.slice(5); });
   const cells = [];
   ZIDS.forEach((z, j) => F.dates.forEach((d, i) => { const b = F.Bd[z][i], p = F.P[z][i];
-    const rc = el("rect", { x: L + i * cw, y: 26 + j * rh, width: cw - 1, height: rh - 3, rx: 2, fill: b < 0 ? "var(--plane2)" : css(BCOL[b]), opacity: animate ? 0 : (b < 0 ? 1 : .35 + .65 * Math.min(1, p / (D.thresholds.red * 1.6))) }, svg);
-    rc.dataset.op = b < 0 ? 1 : .35 + .65 * Math.min(1, p / (D.thresholds.red * 1.6)); cells.push([i, rc]);
+    const rc = el("rect", { x: L + i * cw, y: 26 + j * rh, width: cw - 1, height: rh - 3, rx: 2, fill: b < 0 ? "var(--plane2)" : css(BCOL[b]), opacity: animate ? 0 : (b < 0 ? 1 : .35 + .65 * Math.min(1, p / (siteTh().red * 1.6))) }, svg);
+    rc.dataset.op = b < 0 ? 1 : .35 + .65 * Math.min(1, p / (siteTh().red * 1.6)); cells.push([i, rc]);
     rc.addEventListener("mousemove", ev => showTip(ev, `<b>${zoneById[z].name}</b><br>${d}: ${p == null ? "no work" : pct(p, 1) + " risk (" + BAND[b] + ")"}`)); rc.addEventListener("mouseleave", hideTip); }));
   $("#qHeat").appendChild(svg);
   $("#qHeatT").textContent = `Daily risk by zone, ${F.dates[0]} to ${F.dates[N - 1]}` + (F.mode === "deteriorate" ? ` (deteriorating: ${zoneById[F.focus].name})` : F.mode === "controls" ? " (controls in place)" : "");
@@ -1377,7 +1587,22 @@ DRAW.forecast = () => {
 };
 
 /* ================================================================== real-world check on New York City records */
+function ontCheck() {
+  const O = S.ontario; if (!O) { $("#ontCk").hidden = true; return; } const red = O.bands[0];
+  $("#ontSub").textContent = `Ontario's Ministry of Labour publishes its construction field visits and orders: ${fmt(O.rows_source)} rows, ${fmt(O.workplaces)} workplaces, ${O.from.slice(0, 4)}–${O.to.slice(0, 4)}. A separate model read ${fmt(O.inspections)} inspections and estimated the chance of an investigation at the same workplace within 90 days. Trained on 2012–2020; tested on ${fmt(O.test_rows)} inspections in 2021–2024.`;
+  $("#ontT").innerHTML = [["Ranking quality (AUC)", `${O.auc_base.toFixed(2)} → ${O.auc_size.toFixed(2)} → ${O.auc.toFixed(2)}`, "project type, region, season → plus size → plus orders and record"],
+    ["Investigation rate at red workplaces", red.lift.toFixed(1) + "×", `the average of ${pct(O.test_rate, 1)}; red = ${pct(red.share)} of inspections`], ["Later investigations in red", pct(red.caught), `amber adds ${pct(O.bands[1].caught)}; ${pct(O.bands[2].caught)} came from green`]]
+    .map(([k, v, n]) => `<div class="tile"><div class="k">${k}</div><div class="v sig" style="font-size:28px">${v}</div><div class="n">${n}</div></div>`).join("");
+  $("#ontS").innerHTML = "<tr><th>On the inspection</th><th class='r'>Inspections</th><th class='r'>Investigation within 90 days: with / without</th><th class='r'>Ratio</th></tr>" + O.signs.slice(0, 8).map(s => `<tr><td>${s.sign}</td><td class="r">${fmt(s.n)}</td><td class="r">${pct(s.with, 1)} / ${pct(s.without, 1)}</td><td class="r">${s.ratio.toFixed(1)}×</td></tr>`).join("");
+  const W = O.weather;
+  $("#ontR").innerHTML = [`Real records, but a proxy: an investigation can follow a complaint, work refusal or critical injury, and it isn't a count of injuries.`,
+    `Inspectors choose where they go, so this describes inspected workplaces. It's a different unit from the daily zone model, so it doesn't validate that model.`,
+    `Most of the lift comes from a company's and site's record. For sites with no earlier ministry history, AUC falls to ${O.auc_first_look ? O.auc_first_look.toFixed(2) : "–"}.`,
+    `The ratios are unadjusted, and small groups like cranes are noisy. The 2019 file holds only part of that year.`,
+    W ? `Weather isn't confirmed by this data: Toronto-area investigations opened less often on wet (${W.wet.ratio.toFixed(2)}×) and windy (${W.wind.ratio.toFixed(2)}×) days, probably because work and visits slow down. So the simulator's weather effects remain assumptions.` : ""].filter(Boolean).map(x => `<li>${x}</li>`).join("");
+}
 function nycCheck() {
+  ontCheck();
   const N = S.nyc; if (!N) return; $("#nyc").hidden = false;
   const red = N.bands[0], L = N.within_large_jobs, fmt = n => n.toLocaleString("en-CA");
   $("#nTiles").innerHTML = [["Real incidents flagged in advance", pct(N.warned_share), `${N.incidents_scored_test} accidents and incidents, ${N.split.slice(0, 7)} to ${N.end.slice(0, 7)}; ${pct(N.red_share)} had a red week`],
@@ -1555,7 +1780,7 @@ function scoreUpload(text, prov, name) {
   if (fileDays.length < 5) return { errors: ["The model needs at least 5 work days of logs."] };
   const days = [...new Set(bizRange(fileDays[0], span + 1).concat(fileDays))].sort();
   if (fileDays.length < 20) notes.push("Fewer than 20 work days: the model reads 5- to 20-day windows, so early scores rest on little history.");
-  const base = prov === "BC" ? D.base_rate_bc : S.sources.provinces[prov].rate, th = S.by_province[prov].thresholds;
+  const base = S.sources.provinces[prov].rate, th = S.by_province[prov].thresholds;
   const U = { days, logs: {}, crew: {}, risk: {}, weather: { gust: [], humidex: [], rain: [], tmin: [], snow: [], dir: [] }, fc: {}, live: new Set(), events: [],
     upload: true, prov, name: name || "Your site", base_rate: base, th };
   let filled = 0;
@@ -1880,7 +2105,7 @@ function laSample() {                                    // a realistic three we
 }
 function laScore() {                                      // the trained model on the planned crews and the window's weather
   const days = laDays(), lead = bizRange(addBiz(days[0], -20), 20), all = lead.concat(days), r = rngFor("la" + days[0]);
-  const src = { days: all, logs: {}, crew: {}, weather: { gust: [], humidex: [], rain: [], tmin: [], snow: [] }, fc: {}, base_rate: PROV === "BC" ? D.base_rate_bc : S.sources.provinces[PROV].rate };
+  const src = { days: all, logs: {}, crew: {}, weather: { gust: [], humidex: [], rain: [], tmin: [], snow: [], chill: [] }, fc: {}, base_rate: S.sources.provinces[PROV].rate, th: S.by_province[PROV].thresholds };
   all.forEach(d => { const w = laWeather(d); src.weather.gust.push(w.gust); src.weather.humidex.push(w.humidex); src.weather.rain.push(w.rain); src.weather.tmin.push(w.tmin); src.weather.snow.push(false); });
   ZIDS.forEach(z => { src.logs[z] = Object.fromEntries(FIELDS_ALL.map(k => [k, []])); src.crew[z] = [];
     all.forEach((d, i) => { const on = i >= 20 ? LA.acts.filter(a => a.zone === z && laOn(a, d)) : null;
@@ -2016,13 +2241,14 @@ const PM_PROG = {
        <p><b>Health and Safety Excellence program.</b> WSIB offers rebates to businesses that complete approved health and safety topics.</p>`,
   AB: `<p><b>WCB-Alberta.</b> Premiums are adjusted by experience rating on your own claims costs.</p>
        <p><b>Partners in Injury Reduction (PIR).</b> Employers who hold a Certificate of Recognition and perform well can receive a refund on part of their premium.</p>` };
+const pmProg = j => PM_PROG[j] || `<p><b>${esc(CA.jur[j].board)}.</b> Your premium depends on your industry's rate and, usually, your own claims record. Ask your board how experience rating and any safety-program incentive work in ${esc(NMP[j])}.</p>`;
 const PM = { prov: "BC", workers: 120, payroll: 9000000, rate: 3.0, claims: null, cost: 40000, unins: 15000, basis: "sim", eff: 25, cred: 30, incent: 0, fee: 0 };
 function pmBasis() { const o = [["sim", `Canadian test portfolio: ${pct(M.warned_share)} flagged`, M.warned_share]];
   if (S.nyc) o.push(["nyc", `Real NYC incidents: ${pct(S.nyc.warned_share)} flagged`, S.nyc.warned_share]);
   if (upRes && upRes.check.length) { const late = upRes.check.filter(c => UP.days.indexOf(c.d) >= 20), w = (late.length ? late : upRes.check); o.push(["own", `Your uploaded logs: ${pct(w.filter(c => c.warned).length / w.length)} flagged`, w.filter(c => c.warned).length / w.length]); }
   return o; }
 function pmCalc(eff = PM.eff) {
-  const claims = PM.claims ?? +(PM.workers * (PM.prov === "BC" ? D.base_rate_bc : S.sources.provinces[PM.prov].rate) / 100).toFixed(1);
+  const claims = PM.claims ?? +(PM.workers * (S.sources.provinces[PM.prov].rate) / 100).toFixed(1);
   const flag = (pmBasis().find(o => o[0] === PM.basis) || pmBasis()[0])[2], premium = PM.payroll * PM.rate / 100;
   const avoided = claims * flag * eff / 100, share = claims ? avoided / claims : 0;
   const prem = premium * PM.cred / 100 * share, unins = avoided * PM.unins, incent = premium * PM.incent / 100, board = avoided * PM.cost;
@@ -2032,7 +2258,7 @@ function pmCalc(eff = PM.eff) {
 const money = v => "$" + Math.round(v).toLocaleString("en-CA");
 function pmRender() {
   const r = pmCalc();
-  $("#pmProg").innerHTML = PM_PROG[PM.prov] + `<p class="note">Check the current rules, eligibility and amounts with your board; this page doesn't hold them.</p>`;
+  $("#pmProg").innerHTML = pmProg(PM.prov) + `<p class="note">Check the current rules, eligibility and amounts with your board; this page doesn't hold them.</p>`;
   $("#pmKpis").innerHTML = [["Lost-time claims avoided", r.avoided.toFixed(1) + " a year", `of ${r.claims} expected: ${pct(r.flag)} flagged × ${PM.eff}% prevented`],
     ["Your savings", money(r.total) + " a year", "premium effect + uninsured costs + incentive"],
     ["Net of the subscription", PM.fee ? money(r.net) : "–", PM.fee ? (r.payback ? `pays back in ${r.payback.toFixed(1)} months` : "") : "enter the subscription cost"],
@@ -2045,7 +2271,7 @@ function pmRender() {
   $("#pmNote").textContent = `Premium ${money(r.premium)} a year (${money(PM.payroll)} payroll × $${PM.rate} per $100). The premium effect assumes ${PM.cred}% of your premium tracks your own claims costs, which fall in proportion to the claims avoided; each board's formula is more involved and lags by a few years.`;
 }
 function pmForm() {
-  const f = [["prov", "Province", "sel"], ["workers", "Workers on your sites (full-time equivalent)"], ["payroll", "Annual assessable payroll ($)"], ["rate", "Premium rate ($ per $100 of payroll)", "", "Example: use the rate on your notice"],
+  const f = [["prov", "Province or territory", "sel"], ["workers", "Workers on your sites (full-time equivalent)"], ["payroll", "Annual assessable payroll ($)"], ["rate", "Premium rate ($ per $100 of payroll)", "", "Example: use the rate on your notice"],
     ["claims", "Lost-time claims a year", "", "Blank = workers × your province's construction rate"], ["basis", "Share of incidents flagged in advance", "basis"],
     ["eff", "Share of flagged incidents prevented by acting on the alert (%)", "", "Your assumption; the table shows 10%, 25% and 50%"], ["cred", "Share of premium that tracks your own claims (%)", "", "Experience rating; assumption"],
     ["unins", "Uninsured cost to you per lost-time claim ($)", "", "Example: lost time, schedule, overtime, investigation"], ["incent", "Safety-program incentive (% of premium)", "", "COR, PIR or rebate, if you qualify"],
@@ -2453,6 +2679,13 @@ function show(id) {
   if (!drawn[id]) { drawn[id] = true; (DRAW[id] || (() => {}))(); }
 }
 tabs.forEach(a => a.addEventListener("click", e => { e.preventDefault(); show(a.dataset.tab); try { history.replaceState(null, "", "#" + a.dataset.tab); } catch (_) {} }));
+Object.assign(DRAW, DRAW_LATE);
+["uProv", "phProv"].forEach(id => { const e = document.getElementById(id); if (e) { e.innerHTML = CA.order.map(k => `<option value="${k}">${NMP[k]}</option>`).join(""); e.value = SITE.jur; } });
+loadClimate(); WXD = null; { const f = fcSnapshot(); if (f) { const fr = f.filter(w => w.d >= todayLocal()); if (fr.length) applyForecast(fr); } }
+drawSiteBar();
+$("#sbJ").onchange = e => { const j = e.target.value, c0 = CA.jur[j].cities[0]; setSite({ jur: j, city: c0.name, type: c0.type }); };
+$("#sbC").onchange = e => setSite({ city: e.target.value });
+$("#sbT").onchange = e => setSite({ type: e.target.value });
 cover(); kpis(); plan(); timeline(); paintSnd();
 day = Math.max(0, testStart() + 40);
 for (let k = 0; k < H.days.length; k++) { const i = (day + k) % H.days.length; if (ZIDS.some(z => H.risk[z][i] && H.risk[z][i][1] === 2)) { day = i; break; } }
@@ -2461,5 +2694,6 @@ setView("proj");                                         // open on the viewer's
 show((location.hash || "#live").slice(1));
 addEventListener("hashchange", () => show((location.hash || "#live").slice(1)));
 connectFeed(); connectControls(); connectReports();
+loadForecast(false).then(() => { if (view === "proj") setView("proj"); });
 $("#bLang").innerHTML = Object.entries(LANGS).map(([k, L]) => `<option value="${k}">${L.name}</option>`).join("");
 </script>

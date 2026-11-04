@@ -1,8 +1,8 @@
 # Site Safety Early Warning
 
-**Which zone of a construction site is most likely to hurt someone in the next five work days, the warning signs behind it, and the controls to put in place before the shift.**
+**Which zone of a construction site is most likely to hurt someone in the next five work days, the warning signs behind it, and the controls to put in place before the shift, anywhere in Canada.**
 
-A superintendent already knows how many people will be on site tomorrow. This system says *where* the next injury is building up. For each of ten work zones it scores, every work day, the risk of an injury or high-potential near miss in the next five work days. It names the warning signs driving that risk (near-miss reports, hazard observations, housekeeping, fatigue, trade congestion, the weather forecast) and turns them into controls cited for the site's province. It runs on a contractor's portfolio of 30 sites in **British Columbia, Ontario and Alberta**, each calibrated to its province's construction injury rate and run on its province's **real weather**. The live dashboard re-scores as a site logs each day, reads **site photos** for hazards, scores a company's **own uploaded logs**, and is checked against **real incidents** in New York City's public records.
+A superintendent already knows how many people will be on site tomorrow. This system says *where* the next injury is building up. For each of ten work zones it scores, every work day, the risk of an injury or high-potential near miss in the next five work days. It names the warning signs driving that risk and turns them into controls cited for the site's jurisdiction. It covers **all 10 provinces and 3 territories**: 71 hypothetical sites in four project types, each calibrated to its jurisdiction's construction injury rate and run on the **real weather** at its nearest hourly station. The dashboard takes **live forecasts**, reads **site photos**, scores a company's **own uploaded logs**, and includes a second model **trained on 165,000 real Ontario inspections**.
 
 [![Live dashboard](https://img.shields.io/badge/Live_dashboard-FF5F15?style=for-the-badge)](https://claude.ai/artifact/7YTTA3WRJAfJstwjaZGdb6)
 [![Python](https://img.shields.io/badge/Python_pipeline-13233A?style=for-the-badge&logo=python&logoColor=white)](#run-it)
@@ -11,31 +11,62 @@ A superintendent already knows how many people will be on site tomorrow. This sy
 
 Analysis and design by Osman Zakaria, PMP. **Independent work**: not produced by, affiliated with or endorsed by WorkSafeBC, the WSIB, Ontario's Ministry of Labour, Immigration, Training and Skills Development, Alberta OHS or any employer. A decision-support prototype; it supports, and never replaces, a site's safety program and the law.
 
-## Findings (test period: November 2024 – August 2025, 30 sites)
+## Findings (test period: November 2024 – August 2025, 71 sites, simulated logs)
 
 | | |
 |---|---|
-| Test-period events (injuries and high-potential near misses) | 470 |
-| Flagged amber or red in the zone during the 5 work days before | **84%** (injuries alone: 81%) |
-| Event rate on red zone-days vs the average | **3.5×** |
+| Test-period events (injuries and high-potential near misses) | 626 |
+| Flagged amber or red in the zone during the 5 work days before | **83%** (injuries alone: 79%) |
+| Event rate on red zone-days vs the average | **3.7×** |
 | Median warning before an event | 5 work days |
-| Ranking quality (AUC): crew plan only → early-warning model → ceiling | 0.66 → **0.75** → 0.77 |
-| Alert load | about 3 red and 10 amber zone-days per site each week (10 zones) |
+| Ranking quality (AUC): crew plan only → early-warning model → ceiling | 0.71 → **0.79** → 0.80 |
+| Alert load | about 3 red and 8 amber zone-days per site each week; 40% of zone-days raise an alert |
 
-| Province | Construction claims per 100 workers (real) | Simulated | Test events | Flagged in advance: shared → own cut-off | AUC | Red-day lift |
-|---|---|---|---|---|---|---|
-| British Columbia | 3.0 (WorkSafeBC) | 2.8 | 292 | 85% → **85%** | 0.74 | 3.1× |
-| Alberta | 1.7 (AWCBC ÷ StatCan) | 2.2 | 98 | 72% → **77%** | 0.74 | 3.5× |
-| Ontario | 0.9 (AWCBC ÷ StatCan) | 1.0 | 80 | 76% → **88%** | 0.75 | 3.6× |
+| Jurisdiction | Construction claims per 100 workers (real) | Sites | Test events | Flagged in advance | AUC | AUC when left out of training | Alerts per site-week |
+|---|---|---|---|---|---|---|---|
+| British Columbia | 3.00 | 9 | 155 | 76% | 0.74 | 0.72 | 9.5 |
+| Alberta | 1.33 | 7 | 55 | 84% | 0.80 | 0.80 | 12.1 |
+| Saskatchewan | 1.49 | 4 | 36 | 97% | 0.79 | 0.78 | 14.3 |
+| Manitoba | 2.90 | 4 | 46 | 80% | 0.73 | 0.73 | 12.6 |
+| Ontario | 0.95 | 12 | 77 | 92% | 0.84 | 0.83 | 10.6 |
+| Quebec | 2.18 | 8 | 105 | 86% | 0.76 | 0.76 | 11.2 |
+| New Brunswick | 0.56 | 6 | 15 | 87% | 0.78 | 0.76 | 9.7 |
+| Nova Scotia | 1.39 | 4 | 25 | 92% | 0.84 | 0.83 | 7.8 |
+| Prince Edward Island | 1.89 | 3 | 30 | 80% | 0.76 | 0.75 | 9.5 |
+| Newfoundland and Labrador | 1.43 | 5 | 36 | 81% | 0.73 | 0.73 | 11.5 |
+| Yukon | 2.62 | 3 | 9 | 56% | 0.63 | 0.64 | 7.0 |
+| Northwest Territories | 4.05 | 3 | 19 | 74% | 0.78 | 0.80 | 8.5 |
+| Nunavut | 4.05 | 3 | 18 | 83% | 0.69 | 0.63 | 9.9 |
 
-**What the model upgrade changed** (15 → 30 sites, tuned settings). In a controlled test on the original 15 sites, doubling the training data raised AUC from 0.73 to 0.75. Trend features (near misses or housekeeping getting worse over 5 vs 20 days, crew ramp-up) added at most 0.002, so they were left out. The tree settings were chosen on a validation window inside the training period, never on the test months. Across the full portfolio: events flagged in advance rose from 79% to 84%, injuries from 70% to 81%, and AUC from 0.72 to 0.75. The cost is a little more alerting: the red-day lift fell from 3.9× to 3.5×, and alerts rose from 12 to 13 per site each week. The extra sites are simulated like the first 15, so the gain shows the model learns its world better with more data, not that it is now proven on real sites.
+Rates are the median of 2022–2024 accepted construction lost-time claims (AWCBC) divided by construction workers (Statistics Canada; payroll employees only in the territories). BC uses WorkSafeBC's published rate. NWT and Nunavut report claims together. Ontario's 2024 count is 81% above 2023, which is why the median is used. Small jurisdictions have few test events, so their percentages swing widely.
 
-- **It says where, not just how many.** The crew plan alone ranks zone-days at AUC 0.66. Adding the logs a site already keeps lifts it to 0.75, most of the way to a model that could see each zone's true hidden hazard (0.77).
-- **The warning comes from inspections and site conditions.** After crew exposure, hazard observations, trade congestion, housekeeping, the heat forecast and overtime carry the signal.
-- **Each province gets its own alert cut-offs.** Ontario's base rate is a third of BC's, so with one shared cut-off its zones turn red less often. Each province alerts at the lower of the shared cut-off and its own top 5% (red) and next 15% (amber) of zone-days, so no province is flagged less than before. Ontario rises from 76% to 88% and Alberta from 72% to 77%, BC is unchanged, and the cost is two to four more alerts per site each week in Ontario and Alberta.
-- **Wind is backed by a rule.** Wind incidents are too rare for the model to weigh, so a forecast gust of 50 km/h or more sets crane, scaffold and roof zones to at least amber. Toronto's hot summers added the heat evidence that the BC-only version lacked.
-- **Every alert ends in an action.** Up to three warning signs per alert, each mapped to a control and to the governing provision: BC's OHS Regulation, Ontario's OHSA and O. Reg. 213/91, or Alberta's OHS Act and Code. The dashboard's **Apply** buttons show what each control is worth: the zone is re-scored with that warning sign returned to normal.
-- **BC's record shows what to watch for.** WorkSafeBC accepted 316 general-construction death claims from 2015 to 2024. AWCBC records 151 construction fatalities in BC, Ontario and Alberta in 2022 alone.
+**What changed from the three-province version.** The test is broader, not stronger. All sites still come from one simulator, so the left-out AUCs show the model carries across places in that simulator, not that real sites behave alike. Each jurisdiction now has its own alert cut-offs, set on the last six months before the test, which trades the old 84% flagged at 13 alerts per site-week for 83% at about 10.5.
+
+- **It says where, not just how many.** The crew plan alone ranks zone-days at AUC 0.71. Adding the logs a site already keeps lifts it to 0.79, close to a model that could see each zone's true hidden hazard (0.80).
+- **Crew exposure and hazard observations carry the signal.** In this simulator, shuffling either costs about 0.07 AUC; every other sign costs under 0.003.
+- **Rules back the model on rare weather.** A forecast gust of 50 km/h sets crane, scaffold and roof zones to at least amber, and a wind chill of -27 °C does the same for outdoor zones, where work/warm-up schedules begin.
+- **Every alert ends in an action.** Up to three warning signs per alert, each mapped to a control and to the jurisdiction's legislation. BC, Ontario and Alberta cite parts or sections. The other 10 name the instrument and topic, and need legal review.
+
+## Real Canadian check: Ontario inspection records
+
+Ontario's Ministry of Labour publishes every closed field visit: date, workplace, case type, and each order with the regulation section cited. For construction, 2012–2024, that is 770,033 rows, 156,818 workplaces, 636,646 orders and 63,338 investigations. A separate model reads each inspection and estimates the chance of an investigation at the same workplace within 90 days. It was trained on 2012–2020 and tested on 44,509 inspections in 2021–2024.
+
+| Test period: 2021–2024 | |
+|---|---|
+| Ranking quality (AUC): project type, region, season → plus size → plus orders and record | 0.58 → 0.71 → **0.78** |
+| Investigation rate at red workplaces (10% of inspections) | **4.7×** the 4.8% average |
+| Later investigations from red / amber / green | 45% / 22% / 33% |
+| AUC for sites with no earlier ministry history | 0.63 |
+
+**Reading it honestly:**
+- These are real records, but an investigation is a proxy. It can follow a complaint, a work refusal or a critical injury, and it isn't a count of injuries.
+- Inspectors choose where they go, so results describe inspected workplaces only.
+- Most of the lift comes from a site's and company's earlier record. Orders on the visit itself add less.
+- It's a different unit from the daily zone model, so it doesn't validate that model.
+- Weather isn't confirmed here. Toronto-area investigations opened less often on wet days (0.79×) and windy days (0.89×), probably because work and visits slow down. The simulator's weather effects remain assumptions.
+- The 2019 file holds only part of that year. Source names are never used: only the ministry's ID numbers.
+
+The model ships in the dashboard as the **Inspection check** tab. Code: `ssew/ontario.py`; rerun with `python run_all.py --ontario`.
 
 ## Real-world check: New York City construction sites
 
@@ -71,6 +102,12 @@ Code: `ssew/nyc.py`. Run `python run_all.py --download` to fetch the data, then 
 
 [Open Site Safety Early Warning](https://claude.ai/artifact/7YTTA3WRJAfJstwjaZGdb6)
 
+A page hosted on claude.ai can't reach other websites, so that copy shows a saved forecast with its date. `docs/live/index.html` is the same page: serve it from your own address, such as GitHub Pages, and it fetches forecasts live.
+
+- **Your site.** Choose the province or territory, city and project type. Cut-offs, base rate, legislation, seasonal weather and crew pattern all follow.
+- **Live weather.** Seven-day forecasts from Open-Meteo with no key, or OpenWeather and Tomorrow.io with your own key, which stays in your browser. Environment Canada alerts appear where the host allows it. Forecasts screen for wind, heat, extreme cold, wet, ice, smoke, thunderstorms and freezing rain, and feed the zone scores. Open-Meteo's free service is non-commercial, so a paid product needs its commercial plan or another provider.
+- **Inspection check.** Enter what an inspection found and get the chance of a ministry investigation within 90 days, from the model trained on real Ontario records. It's only indicative outside Ontario.
+
 **Built to sit on top of Procore, Autodesk or Oracle, not to replace them.** Four tools aim at what the big platforms do less well in Canada:
 
 - **Look-ahead: clashes before they're scheduled.** Load a 2- or 3-week look-ahead (CSV from Primavera P6 or MS Project; column names such as *Task Name* or *Early Start* are recognised). Each activity is checked against the weather for its day (seasonal average, or Environment Canada's forecast typed in), crane lifts over working crews, three or more activities in one zone, and hot work beside other trades. The trained model scores each zone-day from the planned crews.
@@ -103,7 +140,6 @@ Code: `ssew/nyc.py`. Run `python run_all.py --download` to fetch the data, then 
   - **the file is read in the browser only: it is never uploaded, saved or shared.** A built-in example (60 work days, one zone deteriorating) shows the whole flow without a file.
 - **Live site.** Press **Play** to watch risk move across the site plan through the build:
   - zones change between green, amber and red, and red zones pulse;
-  - the clock has sound, with a tick for each day that deepens as the alert level rises, a bell each new month, a cue when the level changes and a mark for each recorded incident (a Sound button turns it off);
   - crews (hard-hatted dots) move inside their zones;
   - rain, snow, wind streaks and heat shimmer appear on the days they happened;
   - the crane jib turns, and stops with a "stood down" banner when high wind is forecast;
@@ -168,16 +204,26 @@ Nine 16:9 pages (PNG at 220 dpi) in [`docs/dashboards/`](docs/dashboards/), also
 | Construction-Related Incidents; DOB NOW: Build – Approved Permits; DOB ECB Violations; DOB Complaints Received | NYC Department of Buildings (NYC Open Data) | The real-world check: real construction accidents and incidents, active construction sites and job size, violations and complaints by building and date | [bf97-mjsy](https://data.cityofnewyork.us/d/bf97-mjsy) · [rbx6-tga4](https://data.cityofnewyork.us/d/rbx6-tga4) · [6bgk-3dad](https://data.cityofnewyork.us/d/6bgk-3dad) · [eabe-havv](https://data.cityofnewyork.us/d/eabe-havv) |
 | BC OHS Regulation; Ontario OHSA and O. Reg. 213/91; Alberta OHS Act and Code | WorkSafeBC; Government of Ontario; Government of Alberta | The provision cited by each control | [BC](https://www.worksafebc.com/en/law-policy/occupational-health-safety/searchable-ohs-regulation) · [Ontario](https://www.ontario.ca/laws/regulation/910213) · [Alberta](https://www.alberta.ca/ohs-act-regulation-code) |
 
+| *National Work Injury, Disease and Fatality Statistics 2022–2024*; 2024 lost-time and fatality workbooks | AWCBC | Construction claims and fatalities in all 13 jurisdictions; injury mix by event | [awcbc.org: NWISP](https://awcbc.org/data-and-statistics/national-work-injury-disease-statistics-program) |
+| Employees by industry, table 14-10-0201 | Statistics Canada | Construction employees in the territories | [Table 14-10-0201-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1410020101) |
+| Field visits, workplaces visited and orders issued, 2012–2024 | Ontario Ministry of Labour | The real-records model and check | [data.ontario.ca](https://data.ontario.ca/dataset/occupational-health-and-safety-field-visits-workplaces-visited-and-orders-issued) |
+| Construction fatalities and critical injuries, 2015–2024 | Ontario Ministry of Labour | Evidence tab | [data.ontario.ca](https://data.ontario.ca/) |
+| Lésions professionnelles 2022, 2023 | CNESST | 19,092 Quebec construction injury records: event, cause, injury, age | [Données Québec](https://www.donneesquebec.ca/recherche/dataset/lesions-professionnelles) |
+| Hourly climate at 65 stations | Environment and Climate Change Canada | Shift-hour weather for every site, 2023–2025 | [climate.weather.gc.ca](https://climate.weather.gc.ca/) |
+| Forecasts and alerts | Open-Meteo, OpenWeather, Tomorrow.io; MSC GeoMet | Live weather | [Open-Meteo](https://open-meteo.com/en/docs) · [OpenWeather](https://openweathermap.org/forecast5) · [Tomorrow.io](https://docs.tomorrow.io/reference/weather-forecast) · [GeoMet alerts](https://api.weather.gc.ca/collections/weather-alerts) |
+
+**Reviewed and left out:** the federal Employer's Annual Hazardous Occurrence Report files cover air, rail, water, ports and the federal public service, not construction; WSIB fatal-claim investigation counts cover all industries and stopped in 2021; synthetic logs aren't evidence.
+
 `python run_all.py --download` fetches every source into `data/raw/` (not committed). Workers' compensation boards differ in coverage and in what counts as a lost-time claim, so each province is calibrated to, and compared with, itself.
 
 ## Method
 
 1. **Parse the statistics.** `ssew/sources.py` reads the WorkSafeBC, AWCBC and Alberta PDFs directly, reads the Statistics Canada table, and computes each province's construction claims rate.
-2. **Build the sites.** A 24-storey tower with ten zones runs a six-phase, 30-month programme. Thirty sites (14 BC, 9 Ontario, 7 Alberta) vary in crew size and run on their province's weather.
-3. **Simulate the logs.** Each zone has a hidden safety climate that drifts and sometimes deteriorates for weeks. It drives both what the site logs and the incidents. Weather raises the hazard only in the zones it affects. Hazards are rescaled so each province runs at its real rate, and each injury takes an event type from AWCBC's construction mix.
-4. **Predict.** Gradient-boosted trees on 5-, 10- and 20-day indicator windows, the planned crew hours, the five-day weather forecast and the province's base rate, trained on all 30 sites before November 2024, with tree settings chosen on a validation window (May–October 2024). An exposure-only baseline (crew plan and zone) is the yardstick.
-5. **Alert.** Bands are fixed on the training period for each province: red and amber start at the lower of the portfolio's top 5% / next 15% cut-off and the province's own, plus the wind rule. Warning signs are the change in risk when each signal returns to the zone's normal level.
-6. **Act.** `ssew/alerts.py` maps each warning sign and each zone's standing hazard to a control, cited for BC, Ontario and Alberta.
+2. **Build the sites.** Ten zones run a six-phase, 30-month programme. 71 sites across 13 jurisdictions vary in crew size and project type (high-rise, low- or mid-rise, civil, industrial) and run on the weather at their nearest hourly station. Project types and winter slowdowns are assumptions.
+3. **Simulate the logs.** Each zone has a hidden safety climate that drifts and sometimes deteriorates for weeks. It drives both what the site logs and the incidents. Weather raises the hazard only in the zones it affects. Hazards are rescaled so each jurisdiction runs at its real rate, and each injury takes an event type from AWCBC's construction mix. With few sites, realised rates in small jurisdictions can sit well off target (PEI 4.5 vs 1.9, Yukon 0.7 vs 2.6).
+4. **Predict.** Gradient-boosted trees on 5-, 10- and 20-day indicator windows, the planned crew hours, the five-day weather forecast and the jurisdiction's base rate, trained on all 71 sites before November 2024, with tree settings carried over from the validation window of the earlier version (May–October 2024). An exposure-only baseline (crew plan and zone) is the yardstick.
+5. **Alert.** Bands are fixed before the test for each jurisdiction: its own top 5% (red) and next 15% (amber) of zone-days from May to October 2024, plus wind and cold rules. Warning signs are the change in risk when each signal returns to the zone's normal level.
+6. **Act.** `ssew/alerts.py` maps each warning sign and each zone's standing hazard to a control, cited for each jurisdiction.
 7. **Go live.** `model.export` writes the trained trees to JSON. The dashboard embeds them and scores logged days in the browser. `python run_all.py --feed feed.json` folds logged days back into training (`ssew/feed.py`).
 
 All assumptions are in `ssew/config.py`.
@@ -200,11 +246,14 @@ python run_all.py --download
 
 | File | What it does |
 |---|---|
+| `canada.py` | All 13 jurisdictions: AWCBC, Statistics Canada, CNESST and Ontario statistics; cities; nearest stations |
+| `ontario.py` | The model trained on real Ontario inspection records, and its test |
+| `live.py` | The saved forecast embedded in the page |
 | `config.py` | Sources, provinces and weather stations, programme dates, horizon, alert bands, weather screens |
 | `sources.py` | Downloads and parses WorkSafeBC, AWCBC, Statistics Canada, Alberta OHS and ECCC data; provincial rates |
-| `site.py` | Zones, programme, crews, hidden safety climate, logs and incidents for 30 sites in three provinces |
+| `site.py` | Zones, programme, project types, crews, hidden safety climate, logs and incidents for 71 sites |
 | `model.py` | Features, early-warning model, baseline, evaluation, warning signs, wind rule, model export |
-| `alerts.py` | Control library cited for BC, Ontario and Alberta |
+| `alerts.py` | Control library cited for all 13 jurisdictions |
 | `feed.py` | Folds live-feed days back into the history for retraining |
 | `app.py`, `app_template.html` | The live dashboard with its in-browser scoring engine and live feed |
 | `report.py` | The nine report dashboards |
@@ -213,7 +262,10 @@ python run_all.py --download
 ## Limits
 
 - **Simulated logs.** The leading indicators are simulated, so the performance numbers show what the method can do with data of this kind, not what any real site will see. A pilot on a contractor's own records is the next step.
-- **Small provinces are less certain.** Ontario has the fewest test events (80), and reaching 88% flagged takes its own cut-offs, at the highest alert load: 14 per site each week, up from 10. Alberta flags the smallest share (77% of 98 test events). More sites in both provinces would help.
+- **Small jurisdictions are less certain.** Yukon has 9 test events, and New Brunswick 15. Territorial rates use payroll employees, which leave out the self-employed and can miss crews from the south.
+- **The real-records model is a proxy.** It predicts ministry investigations at inspected Ontario workplaces, not injuries, and it's only indicative elsewhere.
+- **Alerts are common.** 40% of zone-days raise an alert, partly from the cold rule in cold places, which may be too many for a real site.
+- **Citations and language.** Outside BC, Ontario and Alberta, citations name the instrument and topic and need legal review. Quebec needs a French-language review, and Inuktut needs in Nunavut aren't covered.
 - **Rates are not comparable across boards.** Coverage and lost-time definitions differ by province.
 - **Weather.** Gusts are estimated from hourly mean wind (×1.5), and observed weather stands in for the forecast in history.
 - **Legislation.** References point to the governing provision; check the current text.

@@ -1,4 +1,4 @@
-"""Parse the public safety statistics and weather that calibrate the site model.
+﻿"""Parse the public safety statistics and weather that calibrate the site model.
 
     WorkSafeBC Statistics 2024        BC construction rates, claims mix, deaths by year, death narratives
     AWCBC NWISP 2020-2022             lost-time claims by event (construction, Canada) and BC construction claims
@@ -227,7 +227,9 @@ def weather(code="yvr"):
     w = pd.concat(frames, ignore_index=True)
     w["dt"] = pd.to_datetime(w["Date/Time (LST)"])
     w = w.rename(columns={"Temp (°C)": "temp", "Precip. Amount (mm)": "rain", "Wind Spd (km/h)": "wind",
-                          "Hmdx": "humidex", "Rel Hum (%)": "rh", "Weather": "wx"})
+                          "Hmdx": "humidex", "Rel Hum (%)": "rh", "Weather": "wx", "Wind Chill": "chill"})
+    if "chill" not in w:
+        w["chill"] = np.nan
     w = w[(w.dt.dt.hour >= C.SHIFT[0]) & (w.dt.dt.hour <= C.SHIFT[1])]
     g = w.groupby(w.dt.dt.normalize())
     wet = w.wx.astype(str).str.contains("Rain|Drizzle|Shower", case=False)
@@ -236,7 +238,10 @@ def weather(code="yvr"):
         "rain_hours": wet.groupby(w.dt.dt.normalize()).sum(),   # hourly files report weather type, not mm
         "wind_max": g.wind.max(), "humidex_max": g.humidex.max(),
         "snow_or_ice": g.wx.apply(lambda s: s.astype(str).str.contains("Snow|Ice|Freezing", case=False).any()),
+        "chill_min": g.chill.min(),
+        "smoke": g.wx.apply(lambda s: s.astype(str).str.contains("Smoke", case=False).any()),
     })
+    day["chill_min"] = day.chill_min.fillna(day.temp_min)
     # ECCC reports mean wind; gusts on a 30 m crane jib run well above it, so screen on 1.5 x the hourly mean
     day["gust_est"] = day.wind_max * 1.5
     # direction (tens of degrees, where the wind comes from) at the windiest shift hour

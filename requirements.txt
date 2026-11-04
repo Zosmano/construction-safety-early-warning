@@ -3,3 +3,4 @@ numpy>=1.26
 scikit-learn>=1.5
 matplotlib>=3.9
 pymupdf>=1.24
+statsmodels

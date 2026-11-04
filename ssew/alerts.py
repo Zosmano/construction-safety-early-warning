@@ -1,9 +1,10 @@
-"""Turn a flagged zone into immediate, specific controls: what to do before the next shift, tied to the driver
+﻿"""Turn a flagged zone into immediate, specific controls: what to do before the next shift, tied to the driver
 behind the alert and to the legislation that governs it in the site's province.
 
     BC  Occupational Health and Safety Regulation (OHSR); Workers Compensation Act
     ON  Occupational Health and Safety Act (OHSA); O. Reg. 213/91 Construction Projects; O. Reg. 297/13; O. Reg. 490/09
     AB  Occupational Health and Safety Act; OHS Code
+    The other 10: see LAWS below. Their references name the instrument and the topic, not a section number.
 
 References point the site's competent person to the governing provision; always check the current text."""
 
@@ -41,6 +42,8 @@ ACTIONS = {  # driver -> (control, {province: reference})
     "Rain and ice forecast": ("Sand or salt decks, ramps and ladders; check edge protection and anchors after the weather",
                               {"BC": "OHSR Part 4: general conditions; Part 11: fall protection", "ON": "O. Reg. 213/91: fall protection (s.26)",
                                "AB": "OHS Code Part 9: fall protection"}),
+    "Extreme cold forecast": ("Work/warm-up schedule, heated shelter and buddy checks; cover skin and keep tools and walkways clear of ice",
+                              {"BC": "OHSR Part 7: thermal exposure", "ON": "OHSA s.25(2)(h): employer general duty", "AB": "OHS Code Part 2: hazard assessment (cold stress)"}),
     "Crew exposure": ("Raise the supervision ratio for the peak crew; brief the day's highest-risk tasks",
                       {"BC": "OHSR Part 3: supervision", "ON": "OHSA s.27: supervisor duties", "AB": "OHS Act: supervisor duties"}),
 }
@@ -68,11 +71,43 @@ ZONE_RULE = {  # the zone's standing control, added to every alert there
             {"BC": "OHSR Part 4: ergonomics", "ON": "OHSA s.25(2)(h): musculoskeletal disorder prevention", "AB": "OHS Code Part 14: lifting and handling loads"}),
 }
 
-LAW = {"BC": "BC OHS Regulation", "ON": "Ontario OHSA and O. Reg. 213/91", "AB": "Alberta OHS Act and OHS Code"}
+# name of the act and the main regulation for the other 10 jurisdictions
+LAWS = {
+    "QC": ("Act respecting occupational health and safety", "Safety Code for the construction industry", "Quebec AOHS and Safety Code for the construction industry"),
+    "MB": ("Workplace Safety and Health Act", "Workplace Safety and Health Regulation (M.R. 217/2006)", "Manitoba Workplace Safety and Health Act and M.R. 217/2006"),
+    "SK": ("Saskatchewan Employment Act, Part III", "Occupational Health and Safety Regulations, 2020", "The Saskatchewan Employment Act and OHS Regulations, 2020"),
+    "NS": ("Occupational Health and Safety Act", "Workplace Health and Safety Regulations", "Nova Scotia OHS Act and Workplace Health and Safety Regulations"),
+    "NB": ("Occupational Health and Safety Act", "General Regulation 91-191", "New Brunswick OHS Act and General Regulation 91-191"),
+    "NL": ("Occupational Health and Safety Act", "OHS Regulations, 2012", "Newfoundland and Labrador OHS Act and OHS Regulations, 2012"),
+    "PE": ("Occupational Health and Safety Act", "OHS General Regulations", "PEI OHS Act and OHS General Regulations"),
+    "YT": ("Workers' Safety and Compensation Act", "Occupational Health and Safety Regulations", "Yukon Workers' Safety and Compensation Act and OHS Regulations"),
+    "NT": ("Safety Act", "Occupational Health and Safety Regulations (R-039-2015)", "Northwest Territories Safety Act and OHS Regulations"),
+    "NU": ("Safety Act", "Occupational Health and Safety Regulations (Nu Reg 003-2016)", "Nunavut Safety Act and OHS Regulations"),
+}
+LAW = {"BC": "BC OHS Regulation", "ON": "Ontario OHSA and O. Reg. 213/91", "AB": "Alberta OHS Act and OHS Code", **{k: v[2] for k, v in LAWS.items()}}
+# which instrument governs a control, and the topic to look up there: "act" = duties in the act, "reg" = the regulation
+TOPICS = {
+    "Near-miss reports": ("act", "incident reporting and investigation"), "Hazard observations": ("act", "workplace inspections and joint committee"),
+    "PPE non-compliance": ("reg", "personal protective equipment"), "Housekeeping": ("reg", "housekeeping and safe access"),
+    "New workers on crew": ("act", "worker orientation, training and supervision"), "Overtime and fatigue": ("act", "employer's general duty"),
+    "Trade congestion": ("act", "coordination duties of the prime contractor or constructor"), "Permit issues": ("reg", "excavation, hoisting and hot work"),
+    "Wind forecast": ("reg", "cranes, hoists and scaffolds"), "Heat forecast": ("act", "employer's general duty (thermal stress)"),
+    "Rain and ice forecast": ("reg", "fall protection and safe surfaces"), "Extreme cold forecast": ("act", "employer's general duty (cold stress)"),
+    "Crew exposure": ("act", "supervisor duties"),
+    "EXC": ("reg", "excavations and trenches"), "CRN": ("reg", "cranes, hoists and rigging"), "FRM": ("reg", "formwork and concrete"),
+    "DCK": ("reg", "fall protection and guardrails"), "SCF": ("reg", "scaffolds and work platforms"), "ROF": ("reg", "fall protection"),
+    "MEP": ("reg", "electrical safety, lockout and hot work"), "INT": ("reg", "silica and dust exposure"), "GTE": ("reg", "traffic control and mobile equipment"),
+    "LAY": ("reg", "manual handling and material storage"),
+}
+for table in (ACTIONS, ZONE_RULE):
+    for key, (_, refs) in table.items():
+        kind, topic = TOPICS[key]
+        for j, (act, reg, _) in LAWS.items():
+            refs[j] = f"{act if kind == 'act' else reg}: {topic}"
 
 
 def recommend(zone, top_drivers, province="BC"):
-    """Up to three driver-specific controls plus the zone's standing control, cited for the site's province."""
+    """Up to three driver-specific controls plus the zone's standing control, cited for the site's jurisdiction."""
     acts = [{"driver": d, "action": ACTIONS[d][0], "ref": ACTIONS[d][1][province]} for d in top_drivers if d in ACTIONS][:3]
     z = ZONE_RULE.get(zone)
     if z:

@@ -1,4 +1,4 @@
-"""Early-warning model: the probability of an injury or high-potential near miss in a zone over the next
+﻿"""Early-warning model: the probability of an injury or high-potential near miss in a zone over the next
 HORIZON work days, from what the site knows at the end of today (indicators logged so far, the crew plan and the
 weather forecast). Trained before TRAIN_END, judged on the months after."""
 import numpy as np
@@ -22,6 +22,7 @@ GROUPS = {  # driver name shown to the site -> feature columns
     "Wind forecast": ["gust_fc"],
     "Heat forecast": ["humidex_fc"],
     "Rain and ice forecast": ["wet_fc", "freeze_fc"],
+    "Extreme cold forecast": ["cold_fc"],
     "Crew exposure": ["hours_plan", "crew_now"],
 }
 # Recent incidents (events in the last 20 days, days since the last one) were tested and made test-period
@@ -34,6 +35,7 @@ WEATHER_ZONES = {  # zones where each weather driver acts (mirrors site.simulate
     "Wind forecast": ["CRN", "SCF", "ROF"],
     "Heat forecast": ["ROF", "DCK", "FRM", "LAY"],
     "Rain and ice forecast": ["DCK", "SCF", "ROF", "GTE", "LAY", "EXC"],
+    "Extreme cold forecast": ["EXC", "CRN", "FRM", "DCK", "SCF", "ROF", "GTE", "LAY"],
 }
 
 
@@ -46,7 +48,7 @@ def frame(df, events, rates):
     X = df.set_index(["site", "zone", "date"]).reindex(grid)
     X[["crew", "hours", "hazard_obs", "reported_near_misses", "permit_issues", "trades"]] = \
         X[["crew", "hours", "hazard_obs", "reported_near_misses", "permit_issues", "trades"]].fillna(0)
-    wxs = {s: g.drop_duplicates("date").set_index("date")[["gust_est", "humidex_max", "rain_hours", "temp_min", "snow_or_ice"]]
+    wxs = {s: g.drop_duplicates("date").set_index("date")[["gust_est", "humidex_max", "rain_hours", "temp_min", "snow_or_ice", "chill_min"]]
            for s, g in df.groupby("site")}
     prov = df.drop_duplicates("site").set_index("site").province
     ev = events.groupby(["site", "zone", "date"]).size().rename("ev")
@@ -76,6 +78,7 @@ def frame(df, events, rates):
         f["humidex_fc"] = fw(w.humidex_max, "max")
         f["wet_fc"] = fw((w.rain_hours >= C.WET_HOURS).astype(float), "sum")
         f["freeze_fc"] = fw(((w.temp_min <= C.FREEZE_C) | w.snow_or_ice.astype(bool)).astype(float), "sum")
+        f["cold_fc"] = fw((w.chill_min <= C.COLD_CHILL_C).astype(float), "sum")
         f["y"] = (g.ev[::-1].rolling(C.HORIZON_DAYS, min_periods=1).sum()[::-1].shift(-1) > 0).astype(float)
         f["y"] = f.y.where(g.index < len(g) - 1)
         f["true_hazard"] = g.true_hazard.fillna(0)
@@ -102,18 +105,31 @@ def fit(F):
     F = F.copy()
     F["p"] = gb.predict_proba(F[FEATURES])[:, 1]
     F["p_base"] = base.predict_proba(Xb(F))[:, 1]
-    # alert bands per province. Pooled cut-offs under-flag low-rate Ontario, whose zones rarely reach BC-level risk
-    # even when they are its riskiest. Each province's cut-off is the lower of the pooled one and its own top 5% /
-    # next 15% of training zone-days, so a province's riskiest zones always alert and no province alerts less.
+    # alert bands per jurisdiction: its own top 5% (red) and next 15% (amber) of zone-days in the validation window, the latest busy
+    # months before the test. A shared cut-off would leave low-rate places under-flagged and high-rate places over-alerted.
     tr = F.date <= C.TRAIN_END
+    win = tr & (F.date >= "2024-05-01")
     cut = lambda p: {"red": float(np.quantile(p, 1 - C.RED_SHARE)), "amber": float(np.quantile(p, 1 - C.AMBER_SHARE))}
-    pooled = cut(F.loc[tr, "p"])
-    th = {"pooled": pooled, "by_province": {p: {k: min(v, pooled[k]) for k, v in cut(F.loc[tr & (F.province == p), "p"]).items()}
-                                            for p in F.province.unique()}}
+    pooled = cut(F.loc[win, "p"])
+    th = {"pooled": pooled, "by_province": {p: cut(F.loc[win & (F.province == p), "p"]) for p in F.province.unique()}}
     F["band_pooled"] = bands(F.p, th["pooled"]["red"], th["pooled"]["amber"])
     F["band"] = bands(F.p, F.province.map(lambda p: th["by_province"][p]["red"]), F.province.map(lambda p: th["by_province"][p]["amber"]))
     F = rules(F)
     return gb, F, th
+
+
+def leave_out(F):
+    """Each jurisdiction's test months scored by a model trained only on the other jurisdictions. All sites share one simulator,
+    so this checks that scaling by base rate and weather carries across places, not that real sites would behave alike."""
+    out = {}
+    for j in F.province.unique():
+        tr, te = F[(F.date <= C.TRAIN_END) & (F.province != j)], F[(F.date > C.TRAIN_END) & (F.province == j)]
+        if te.y.nunique() < 2:
+            continue
+        gb = HistGradientBoostingClassifier(max_iter=120, learning_rate=0.06, max_leaf_nodes=15, min_samples_leaf=150, l2_regularization=1.0, random_state=0)
+        gb.fit(tr[FEATURES], tr.y)
+        out[j] = float(roc_auc_score(te.y, gb.predict_proba(te[FEATURES])[:, 1]))
+    return out
 
 
 def bands(p, red, amber):
@@ -129,8 +145,13 @@ def rules(F):
     wind = windy & (F.band == "green")
     F["rule"] = np.where(wind, "Wind stand-down rule", "")
     F.loc[wind, "band"] = "amber"
+    # same logic for extreme cold: outdoor zones are at least amber when a work/warm-up schedule is likely in the next five days
+    cold = (F.cold_fc > 0) & F.zone.isin(WEATHER_ZONES["Extreme cold forecast"]) & (F.band == "green")
+    F.loc[cold, "rule"] = "Cold work/warm-up rule"
+    F.loc[cold, "band"] = "amber"
     if "band_pooled" in F:
         F.loc[windy & (F.band_pooled == "green"), "band_pooled"] = "amber"
+        F.loc[(F.cold_fc > 0) & F.zone.isin(WEATHER_ZONES["Extreme cold forecast"]) & (F.band_pooled == "green"), "band_pooled"] = "amber"
     return F
 
 
@@ -140,7 +161,7 @@ def evaluate(F, events, band="band"):
     out = {"test_rows": int(len(te)), "test_base_rate": float(te.y.mean()),
            "auc": float(roc_auc_score(te.y, te.p)), "auc_base": float(roc_auc_score(te.y, te.p_base)),
            "ap": float(average_precision_score(te.y, te.p)), "ap_base": float(average_precision_score(te.y, te.p_base)),
-           "auc_oracle": float(roc_auc_score(te.y, te.true_hazard * (te.hours_plan + 1)))}
+           "auc_oracle": float(roc_auc_score(te.y, te.true_hazard * (te.hours_plan + 1) * te.base_rate))}
     by = te.groupby("band").agg(rows=("y", "size"), event_rate=("y", "mean"))
     by["share_rows"] = by.rows / by.rows.sum()
     by["lift"] = by.event_rate / te.y.mean()

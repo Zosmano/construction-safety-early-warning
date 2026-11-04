@@ -30,9 +30,9 @@ I = {"warn": "", "shield": "", "chart": "", "people": "", "clock": "
      "check": "", "map": "", "book": "", "build": "", "list": "", "chevron": "",
      "calc": "", "flag": ""}
 PAGES = [("Overview", "warn", "Burnaby tower, 10 zones"), ("BC evidence", "book", "WorkSafeBC, AWCBC, Alberta"),
-         ("Site & calibration", "build", "30-month programme"), ("Does it work?", "chart", "Test period, 30 sites"),
+         ("Site & calibration", "build", "30-month programme"), ("Does it work?", "chart", "Test period, all sites"),
          ("Warning record", "clock", "Zone by zone, week by week"), ("Weather triggers", "cloud", "Real YVR shift weather"),
-         ("Provinces", "map", "BC, Ontario, Alberta"), ("Controls & sources", "list", "OHS Regulation, data"),
+         ("Provinces", "map", "All 13 jurisdictions"), ("Controls & sources", "list", "OHS Regulation, data"),
          ("Real-world check", "flag", "NYC public records")]
 FILES = ["P1_overview", "P2_bc_evidence", "P3_site_and_calibration", "P4_does_it_work", "P5_warning_record",
          "P6_weather_triggers", "P7_provinces", "P8_controls_and_sources", "P9_real_world_check"]
@@ -217,7 +217,7 @@ def p1(d):
             ("chart", f"{M['auc']:.2f}", f"AUC (crew-only baseline {M['auc_base']:.2f})"),
             ("people", f"{S['simulated_rate']:.1f}", f"Injuries / 100 person-yrs (BC: {S['sources']['time_loss_rate']:.0f})"),
             ("flag", f"{M['alerts_per_site_week']['red']:.1f}", "Red alerts per site-week")]
-    fig = frame(1, kpis, "Sources: WorkSafeBC Statistics 2024; AWCBC NWISP 2020–2022; Alberta OHS PSI 2020; ECCC hourly climate (YVR).")
+    fig = frame(1, kpis, "Sources: WorkSafeBC Statistics 2024; AWCBC NWISP 2022–2024; Alberta OHS PSI 2020; ECCC hourly climate. Featured site: Burnaby.")
     te = fl[fl.date > C.TRAIN_END]
     worst = te.groupby("date").p.max().idxmax()
     ax = chart(fig, R1[0], f"Site plan on the riskiest test day: {worst:%a %d %b %Y}")
@@ -266,14 +266,14 @@ def p2(d):
             ("chart", f"{src['time_loss_rate']:.0f}", "Time-loss claims / 100 person-years"),
             ("shield", f"{src['serious_rate']['2024']:.2f}", "Serious-injury rate, 2024"),
             ("map", f"{bc['2022']['bc']:,.0f}", "BC construction lost-time claims, 2022")]
-    fig = frame(2, kpis, "WorkSafeBC Statistics 2024 (Figures 1.4, 1.9, 2.7, 2.10; 2024 death descriptions); AWCBC NWISP 2020–2022 (Tables 15, 21); Alberta OHS PSI construction 2020.")
+    fig = frame(2, kpis, "WorkSafeBC Statistics 2024 (Figures 1.4, 1.9, 2.7, 2.10; 2024 death descriptions); AWCBC NWISP 2020–2022 and 2022–2024 (Tables 15, 21); Alberta OHS PSI construction 2020.")
     ax = chart(fig, R1[0], "Work-related death claims, BC general construction", yticks=True)
     ax.bar(deaths.index.astype(str), deaths.values, color=RED, width=0.65)
     for x, v in zip(deaths.index.astype(str), deaths.values):
         chip(ax, x, v, str(v))
     ax.set_ylim(0, deaths.max() * 1.25)
     ax.set_yticks([])
-    ax = chart(fig, R1[1], "Lost-time claims in Canadian construction, by event, 2021–22", pl=0.09)
+    ax = chart(fig, R1[1], "Lost-time claims in Canadian construction, by event, 2023–24", pl=0.09)
     mix = pd.Series(src["event_mix"]).sort_values(ascending=False)
     hbar(ax, [wrap(k, 26) for k in mix.index], list(mix.values), fmt="{:.1%}", colors=AMBER, fs=6.8)
     ax = chart(fig, R1[2], "Serious-injury claims rate, BC construction (per 100 person-years)", yticks=True)
@@ -300,7 +300,7 @@ def p3(d):
     mix = pd.Series(S["sources"]["event_mix"])
     inj = ev[ev.kind != "High-potential near miss"].family.value_counts(normalize=True)
     kpis = [("people", f"{int(crew.sum(1).max())}", "Peak workers on the Burnaby site"),
-            ("clock", f"{S['person_hours']/1e6:.1f}M", "Person-hours, 30 sites"),
+            ("clock", f"{S['person_hours']/1e6:.1f}M", "Person-hours, all sites"),
             ("chart", f"{S['simulated_rate']:.2f}", f"Time-loss rate (BC target {S['sources']['time_loss_rate']:.0f})"),
             ("warn", f"{(ev.kind != 'High-potential near miss').sum()}", "Injuries across the portfolio"),
             ("flag", f"{(ev.kind == 'High-potential near miss').sum()}", "High-potential near misses"),
@@ -333,7 +333,7 @@ def p3(d):
          "audits, permits, new workers, overtime and trade congestion.", HI),
         ("A hidden safety climate", "Each zone's climate drifts and sometimes deteriorates for weeks (a new subcontractor, a schedule crunch). "
          "It drives both the logs and the incidents, but the model never sees it.", RED),
-        ("Pooled across a portfolio", "One site has too few injuries to learn from, so the model trains on a contractor's 30 sites in three provinces, as a "
+        ("Pooled across a portfolio", "One site has too few injuries to learn from, so the model trains on a portfolio across all 13 jurisdictions, as a "
          "real safety department would.", VIOLET)])
     return fig
 
@@ -347,7 +347,7 @@ def p4(d):
             ("calc", f"{M['ap']:.2f}", f"Average precision (base {M['test_base_rate']:.0%})"),
             ("warn", f"{bands.loc['red', 'lift']:.1f}×", "Red-band lift"),
             ("check", f"{M['warned_injuries_share']:.0%}", "Injuries flagged in advance")]
-    fig = frame(4, kpis, f"Trained on all 30 sites (BC, ON, AB) before {C.TRAIN_END}; judged on the ten months after. Bands fixed on the training period.")
+    fig = frame(4, kpis, f"Trained on all sites (13 jurisdictions) before {C.TRAIN_END}; judged on the ten months after. Bands fixed on the training period.")
     ax = chart(fig, R1[0], "Event rate within 5 work days, by alert band", yticks=True)
     order = ["red", "amber", "green"]
     ax.bar([f"{b.title()}\n{bands.loc[b, 'share_rows']:.0%} of zone-days" for b in order], bands.loc[order, "event_rate"], color=[RED, AMBER, GREEN], width=0.6)
@@ -498,76 +498,54 @@ def p6(d):
 
 def p7(d):
     S, evt = d["S"], d["evt"]
-    bs = pd.DataFrame(S["by_site"]).set_index("site")
-    bs["rate"] = bs.injuries / bs.person_hours * 200000
     P, B = S["sources"]["provinces"], S["by_province"]
-    NM = {"BC": "British Columbia", "ON": "Ontario", "AB": "Alberta"}
-    PC = {"BC": BAND2, "ON": BLUE, "AB": VIOLET}
-    kpis = [("map", "3", "Provinces, 30 sites"),
-            ("chart", f"{P['BC']['rate']:.1f}", "BC claims / 100 workers"),
-            ("chart", f"{P['AB']['rate']:.1f}", "Alberta claims / 100 workers"),
-            ("chart", f"{P['ON']['rate']:.1f}", "Ontario claims / 100 workers"),
-            ("warn", f"{sum(P[k]['fatalities']['2022'] or 0 for k in P):.0f}", "Construction deaths, 3 provinces, 2022"),
+    ks = sorted(P, key=lambda k: P[k]["rate"])
+    deaths = {k: sum((P[k]["fatalities"].get(y) or 0) for y in ("2022", "2023", "2024")) for k in P}
+    kpis = [("map", "13", "Provinces and territories"),
+            ("build", f"{len(S['by_site'])}", "Simulated sites, four project types"),
+            ("chart", f"{P[ks[-1]]['rate']:.1f}", f"Highest claims rate per 100 ({ks[-1]})"),
+            ("chart", f"{P[ks[0]]['rate']:.1f}", f"Lowest claims rate per 100 ({ks[0]})"),
+            ("warn", f"{S['canada']['national_2024']['fatal_construction']}", "Construction deaths, Canada, 2024"),
             ("check", f"{evt.warned.mean():.0%}", "Test events flagged in advance")]
-    fig = frame(7, kpis, "Rates: AWCBC accepted construction lost-time claims ÷ Statistics Canada LFS construction employment (table 14-10-0023), 2020–2022. "
-                         "Boards differ in coverage and lost-time definitions.")
-    ax = chart(fig, R1[0], "Construction lost-time claims per 100 workers", yticks=True)
-    yrs = [2020, 2021, 2022]
-    for j, k in enumerate(["BC", "AB", "ON"]):
-        v = [P[k]["by_year"][str(y)] if str(y) in P[k]["by_year"] else P[k]["by_year"][y] for y in yrs]
-        ax.bar(np.arange(3) + (j - 1) * 0.26, v, width=0.25, color=PC[k])
-        for x, vv in zip(np.arange(3) + (j - 1) * 0.26, v):
-            chip(ax, x, vv, f"{vv:.1f}", fs=6.2)
-    ax.set_xticks(range(3))
-    ax.set_xticklabels(yrs)
-    ax.set_yticks([])
-    legend(ax, [NM[k] for k in ["BC", "AB", "ON"]], [PC[k] for k in ["BC", "AB", "ON"]])
-    ax = chart(fig, R1[1], "Construction fatalities accepted (AWCBC)", yticks=True)
-    for j, k in enumerate(["BC", "AB", "ON"]):
-        v = [(P[k]["fatalities"].get(str(y)) or P[k]["fatalities"].get(y) or 0) for y in yrs]
-        ax.bar(np.arange(3) + (j - 1) * 0.26, v, width=0.25, color=PC[k])
-        for x, vv in zip(np.arange(3) + (j - 1) * 0.26, v):
-            chip(ax, x, vv, f"{vv:.0f}", fs=6.2)
-    ax.set_xticks(range(3))
-    ax.set_xticklabels(yrs)
-    ax.set_yticks([])
-    legend(ax, [NM[k] for k in ["BC", "AB", "ON"]], [PC[k] for k in ["BC", "AB", "ON"]])
-    ax = chart(fig, R1[2], "Flagged in advance with each province's own cut-off (| = shared cut-off)", pl=0.06)
-    ks = ["BC", "AB", "ON"]
-    ys = np.arange(3)[::-1]
-    ax.barh(ys + 0.18, [B[k]["warned"] for k in ks], height=0.34, color=HI)
-    ax.barh(ys - 0.18, [B[k]["auc"] for k in ks], height=0.34, color=BAND)
+    fig = frame(7, kpis, "Rates: AWCBC accepted construction lost-time claims, median of 2022-2024 / Statistics Canada construction workers (LFS; SEPH employees in the territories). "
+                         "NWT and Nunavut report together. Boards differ in coverage and lost-time definitions.")
+    ys = np.arange(len(ks))
+    ax = chart(fig, R1[0], "Construction lost-time claims per 100 workers", pl=0.06)
+    ax.barh(ys, [P[k]["rate"] for k in ks], color=HI, height=0.7)
     for y, k in zip(ys, ks):
-        ax.plot([B[k]["warned_pooled"]] * 2, [y + 0.0, y + 0.36], color=INK, lw=1.4)
-        lab = f"{B[k]['warned']:.0%} flagged ({B[k]['events']} events)"
-        if round(B[k]["warned"], 2) != round(B[k]["warned_pooled"], 2):
-            lab += f", was {B[k]['warned_pooled']:.0%}"
-        chip(ax, B[k]["warned"], y + 0.18, lab, horizontal=True, fs=6.4)
-        chip(ax, B[k]["auc"], y - 0.18, f"AUC {B[k]['auc']:.2f}", horizontal=True, fs=6.4)
+        chip(ax, P[k]["rate"], y, f"{P[k]['rate']:.2f}", horizontal=True, fs=6.2)
     ax.set_yticks(ys)
-    ax.set_yticklabels([NM[k] for k in ks], fontsize=7.2)
-    ax.set_xlim(0, 1.35)
+    ax.set_yticklabels(ks, fontsize=7)
     ax.set_xticks([])
-    ax = chart(fig, (0.135, 0.045, 0.855, 0.335), "Site scorecard (test period)")
+    ax = chart(fig, R1[1], "Construction fatalities, 2022-2024 (+ = small counts suppressed)", pl=0.06)
+    ax.barh(ys, [deaths[k] for k in ks], color=BLUE, height=0.7)
+    for y, k in zip(ys, ks):
+        chip(ax, deaths[k], y, f"{deaths[k]:.0f}" + ("+" if any(P[k]["fatalities"].get(q) is None for q in ("2022", "2023", "2024")) else ""), horizontal=True, fs=6.2)
+    ax.set_yticks(ys)
+    ax.set_yticklabels(ks, fontsize=7)
+    ax.set_xticks([])
+    ax = chart(fig, R1[2], "Test events flagged in advance (simulated logs)", pl=0.06)
+    ax.barh(ys, [B[k]["warned"] or 0 for k in ks], color=BAND, height=0.7)
+    for y, k in zip(ys, ks):
+        chip(ax, B[k]["warned"] or 0, y, f"{(B[k]['warned'] or 0):.0%} of {B[k]['events']}", horizontal=True, fs=6.2)
+    ax.set_yticks(ys)
+    ax.set_yticklabels(ks, fontsize=7)
+    ax.set_xlim(0, 1.3)
+    ax.set_xticks([])
+    ax = chart(fig, (0.135, 0.045, 0.855, 0.335), "Jurisdiction scorecard (test period)")
     ax.set_xticks([])
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    # two side-by-side tables, so a portfolio of any size up to ~32 sites fits
-    cols = [("Site", 0.0, "left"), ("Prov.", 0.17, "left"), ("Events", 0.27, "right"), ("Injuries", 0.335, "right"),
-            ("Flagged", 0.41, "right"), ("Red days", 0.475, "right")]
-    half = (len(bs) + 1) // 2
-    step = min(0.061, 0.88 / max(1, half))
-    for off in (0.0, 0.52):
-        for c, x, ha in cols:
-            ax.text(off + x, 0.985, c, fontsize=7.0, weight="bold", color=MUTED, ha=ha, va="top")
-    for i, (s, r) in enumerate(bs.iterrows()):
-        off, y = (0.0, 0.91 - i * step) if i < half else (0.52, 0.91 - (i - half) * step)
-        if s == FLAGSHIP:
-            ax.add_patch(plt.Rectangle((off - 0.005, y - step / 2), 0.49, step, color="#FFE3D3", lw=0))
-        vals = [s + (" (featured)" if s == FLAGSHIP else ""), r.province, f"{r.events:.0f}", f"{r.injuries:.0f}",
-                f"{r.warned:.0%}" if pd.notna(r.warned) else "–", f"{r.red_days:.0f}"]
+    cols = [("Jurisdiction", 0.0, "left"), ("Claims/100", 0.3, "right"), ("Sites", 0.38, "right"), ("Test events", 0.48, "right"), ("Flagged", 0.57, "right"),
+            ("AUC", 0.65, "right"), ("AUC left out", 0.76, "right"), ("Red-day lift", 0.87, "right"), ("Alerts/site-wk", 0.98, "right")]
+    for c, x, ha in cols:
+        ax.text(x, 0.985, c, fontsize=7.0, weight="bold", color=MUTED, ha=ha, va="top")
+    for i, k in enumerate(sorted(P, key=lambda k: P[k]["name"])):
+        y, b = 0.90 - i * 0.068, B[k]
+        fm = lambda v, s: "\u2013" if v is None else s.format(v)
+        vals = [P[k]["name"], f"{P[k]['rate']:.2f}", f"{b['sites']}", f"{b['events']}", fm(b["warned"], "{:.0%}"), fm(b["auc"], "{:.2f}"), fm(b["auc_left_out"], "{:.2f}"), fm(b["red_lift"], "{:.1f}x"), f"{b['alerts_per_site_week']:.1f}"]
         for (c, x, ha), v in zip(cols, vals):
-            ax.text(off + x, y, v, fontsize=6.4, ha=ha, va="center", weight="bold" if s == FLAGSHIP and x == 0 else "normal")
+            ax.text(x, y, v, fontsize=6.4, ha=ha, va="center")
     return fig
 
 
@@ -602,13 +580,13 @@ def p8(d):
         ax.text(x, 0.97, h, fontsize=7.4, weight="bold", color=MUTED, va="top")
     src = [("Statistics 2024", "WorkSafeBC", "BC construction time-loss and serious-injury rates, claims mix, deaths 2015–2024, 2024 death descriptions",
             "worksafebc.com: Data & insights, statistical reports"),
-           ("National Work Injury, Disease and Fatality Statistics 2020–2022", "AWCBC", "Construction claims by event; claims and fatalities by province (BC, ON, AB)",
+           ("National Work Injury, Disease and Fatality Statistics 2022–2024", "AWCBC", "Construction claims by event; claims and fatalities in all 13 jurisdictions",
             "awcbc.org: NWISP publications"),
            ("Potentially Serious Incidents: construction, 2020", "Government of Alberta, OHS", "Near-miss ratio: 75% of construction PSIs hurt no one; PSI types",
             "open.alberta.ca"),
            ("Labour Force Survey, table 14-10-0023", "Statistics Canada", "Construction employment by province: turns AWCBC claims into rates for ON and AB",
             "www150.statcan.gc.ca"),
-           ("Historical hourly climate: Vancouver, Toronto, Calgary", "Environment and Climate Change Canada", "Shift-hour wind, humidex, rain, frost and snow for every work day, 2023–2025",
+           ("Historical hourly climate: the station nearest each site", "Environment and Climate Change Canada", "Shift-hour wind, humidex, rain, frost and snow for every work day, 2023–2025",
             "climate.weather.gc.ca bulk data")]
     for i, row in enumerate(src):
         y = 0.84 - i * 0.165

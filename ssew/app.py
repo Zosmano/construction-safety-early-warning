@@ -1,4 +1,4 @@
-"""Build the self-contained live dashboard (outputs/site_safety_live.html): the flagship's history and scores, the
+﻿"""Build the self-contained live dashboard (outputs/site_safety_live.html): the flagship's history and scores, the
 exported model that re-scores new data in the browser, and everything the tabs show."""
 import datetime as dt
 import json
@@ -6,9 +6,9 @@ import json
 import numpy as np
 import pandas as pd
 
-from . import alerts, config as C
+from . import alerts, canada as K, config as C, ontario
 from .model import GROUPS, WEATHER_ZONES
-from .site import FLAGSHIP, SITES, ZONES
+from .site import ARCH, FLAGSHIP, PROJECT_TYPES, SITES, ZONES
 
 TEMPLATE = C.ROOT / "ssew" / "app_template.html"
 BANDS = ["green", "amber", "red"]
@@ -17,14 +17,30 @@ LOG_FIELDS = {"crew": "crew", "nm": "reported_near_misses", "obs": "hazard_obs",
               "permits": "permit_issues"}
 
 
-def payload(fl, events, wx, crew, summary, narratives, th, test_events, model, logs):
+def canada_block(prov, th, climates, by_prov, stations, snapshot, ont_model, ont):
+    """What the page needs to run for any jurisdiction: rates, cut-offs, law, cities, three years of real weather and live forecasts."""
+    jur = {}
+    for j, name in K.NAMES.items():
+        p, w = prov[j], climates[j]
+        jur[j] = {"name": name, "law": alerts.LAW[j], "board": K.BOARD[j], "rate": round(p["rate"], 3), "quality": p["quality"], "combined": p["combined"],
+                  "th": th["by_province"][j], "workers_k": p["workers_k"], "claims": p["claims"], "fatal": p["fatalities"],
+                  "cities": [{"name": c[0], "lat": c[2], "lon": c[3], "type": c[5], "station": stations.get(c[0], {}).get("name"), "km": stations.get(c[0], {}).get("km")} for c in K.CITIES if c[1] == j],
+                  "climate": {"gust": w.gust_est.round(1).tolist(), "humidex": w.humidex_max.round(1).tolist(), "rain": w.rain_hours.fillna(0).astype(int).tolist(),
+                              "tmin": w.temp_min.round(1).tolist(), "snow": w.snow_or_ice.fillna(False).astype(bool).astype(int).tolist(), "chill": w.chill_min.round(1).tolist()},
+                  "dates": [d.strftime("%Y-%m-%d") for d in w.index]}
+    return {"jur": jur, "order": K.JURS, "types": PROJECT_TYPES, "arch": ARCH, "north": list(K.NORTH), "live": snapshot,
+            "ontario": {"model": ont_model, "red": ont["red"], "amber": ont["amber"], "cats": ontario.CAT_NAMES, "slug": {c: ontario.SLUG(c) for c in ontario.CAT_NAMES}, "medians": ont["medians"]},
+            "smoke": C.SMOKE_PM25, "cold": C.COLD_CHILL_C}
+
+
+def payload(fl, events, wx, crew, summary, narratives, th, test_events, model, logs, ca=None):
     drivers = list(GROUPS)
     days = sorted(set(fl.date.unique()) | set(logs.date.unique()))      # include the last day (no forward target)
     dkey = {d: i for i, d in enumerate(days)}
     risk = {z[0]: [None] * len(days) for z in ZONES}
     for r in fl.itertuples():
         risk[r.zone][dkey[r.date]] = [round(float(r.p), 4), BANDS.index(r.band), [drivers.index(x) for x in r.drivers]]
-    w = wx.reindex(pd.DatetimeIndex(days))
+    w = wx.reindex(pd.DatetimeIndex(days)).ffill().bfill()      # the same gap-filled weather the sites ran on
     ev = events[events.site == FLAGSHIP]
     # raw daily logs per zone (null when the zone had no crew): the live engine rebuilds features from these
     L = logs.set_index(["zone", "date"])
@@ -48,12 +64,13 @@ def payload(fl, events, wx, crew, summary, narratives, th, test_events, model, l
         "weather": {"gust": w.gust_est.round(2).tolist(), "humidex": w.humidex_max.round(2).tolist(),
                     "dir": w.wind_dir.fillna(-1).astype(int).tolist(),
                     "rain": w.rain_hours.fillna(0).astype(int).tolist(), "tmin": w.temp_min.round(1).tolist(),
-                    "snow": w.snow_or_ice.fillna(False).astype(bool).tolist()},
-        "triggers": {"gust": C.CRANE_GUST_KMH, "humidex": C.HUMIDEX_HEAT, "wet": C.WET_HOURS, "freeze": C.FREEZE_C},
+                    "snow": w.snow_or_ice.fillna(False).astype(bool).tolist(), "chill": w.chill_min.round(1).tolist()},
+        "triggers": {"gust": C.CRANE_GUST_KMH, "humidex": C.HUMIDEX_HEAT, "wet": C.WET_HOURS, "freeze": C.FREEZE_C, "cold": C.COLD_CHILL_C},
+        "ca": ca,
         # every calendar day of real Vancouver shift weather, 2023-2025: the seasonal outlook for any future date
         "climate": {"dates": [d.strftime("%Y-%m-%d") for d in wx.index], "gust": wx.gust_est.round(1).tolist(),
                     "humidex": wx.humidex_max.round(1).tolist(), "rain": wx.rain_hours.fillna(0).astype(int).tolist(),
-                    "tmin": wx.temp_min.round(1).tolist(), "snow": wx.snow_or_ice.fillna(False).astype(bool).tolist()},
+                    "tmin": wx.temp_min.round(1).tolist(), "snow": wx.snow_or_ice.fillna(False).astype(bool).tolist(), "chill": wx.chill_min.round(1).tolist()},
         "events": [{"d": r.date.strftime("%Y-%m-%d"), "z": r.zone, "k": r.kind, "f": r.family, "s": bool(r.serious)}
                    for r in ev.itertuples()],
         "crane": ["2023-08-01", "2025-01-31"],
