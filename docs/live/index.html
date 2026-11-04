@@ -395,6 +395,7 @@ footer b{color:var(--navy-ink)}
         <label>Site name <input id="uSite" placeholder="e.g. Tower B, Surrey" maxlength="60"></label></div>
       <label class="drop" id="uDrop" for="uFile"><b>Drop a .csv file here</b> or choose one<input type="file" id="uFile" accept=".csv,text/csv"></label>
       <p class="status" id="uStatus" aria-live="polite">No file yet.</p>
+      <div class="bar" style="margin-top:8px"><button class="btn" id="uUse" hidden>Use these days in the site scan</button><button class="btn" id="uDrop2" hidden>Remove loaded days</button></div><p class="note" id="uUseN"></p>
       <div class="scroll"><table class="t" id="uErr"></table></div></div>
   </div>
   <div id="uOut" hidden>
@@ -1158,8 +1159,8 @@ async function runScan(fast = false) {
   $("#scL").textContent = `${when} · ${phaseAt(d)}${d > t ? " · Project hasn't started, so this scans its first work day" : ""}`;
   scStep("pl", "Programme", `${phaseAt(d)}. ${zonesNow} zones working, ${crewNow} workers planned. ${PRG ? `Your programme: ${PRG.acts.length} activities.` : "Generic programme: yours isn't loaded."}`, PRG ? "" : "gap"); await scWait(500);
   // 4 site records
-  const lo = Math.max(0, day - 19), logged = H.days.slice(lo, day + 1).filter((x, q) => H.live.has(x) && ZIDS.some(z => (H.crew[z][lo + q] || 0) > 0)).length, ph = typeof phRes !== "undefined" && phRes && phRes.date === d ? phRes.res.photos.length : 0;
-  scStep("lg", "Site logs", logged ? `${logged} of the last ${day - lo + 1} work days logged; the rest use typical readings.` : `None logged in the last ${day - lo + 1} work days. Typical readings stand in.`, logged >= 10 ? "" : "gap"); await scWait(400);
+  const lo = Math.max(0, day - 19), isDemo = x => { const o = localDocs[x]; return !!(o && o.sample) && !feedDocs.some(f => f.date === x); }, inWin = H.days.slice(lo, day + 1).filter((x, q) => H.live.has(x) && ZIDS.some(z => (H.crew[z][lo + q] || 0) > 0)), demo = inWin.filter(isDemo).length, logged = inWin.length - demo, ph = typeof phRes !== "undefined" && phRes && phRes.date === d ? phRes.res.photos.length : 0;
+  scStep("lg", "Site logs", demo ? `${demo} of the last ${day - lo + 1} work days use sample logs, for demonstration only.${logged ? ` ${logged} real days.` : ""}` : logged ? `${logged} of the last ${day - lo + 1} work days logged; the rest use typical readings.` : `None logged in the last ${day - lo + 1} work days. Typical readings stand in.`, logged >= 10 ? "" : "gap"); await scWait(400);
   scStep("ph", "Photos, cameras and sensors", ph ? `${ph} photos checked today. No cameras or sensors connected.` : "No photos today. No cameras or sensors connected, so nothing here can see the site.", "gap"); await scWait(400);
   // 5 the ten zones, in plan order
   const rows = []; let k = 0; for (const z of ZIDS) { k++; if (!alive()) return; const P = $("#scz-" + z), r = H.risk[z][day]; P.setAttribute("class", "scz now"); scStep("zn", `Scoring zone ${k} of ${ZIDS.length}`, zoneById[z].name, "run"); await scWait(380); if (!alive()) return;
@@ -1168,8 +1169,8 @@ async function runScan(fast = false) {
   scStep("zn", "Ten zones scored", `${red.length} potential injury, ${amb.length} potential near miss, ${done.length - red.length - amb.length} no warning signs, ${rows.length - done.length} no work.`);
   // the safety walk: from the gate, through flagged zones, riskiest first
   const walk = done.filter(o => o.b > 0).sort((a, b) => b.r[0] - a.r[0]), start = zoneById.GTE.sc; $("#scRoute").setAttribute("points", walk.length ? [start, ...walk.map(o => zoneById[o.z].sc)].map(q => q.join(",")).join(" ") : ""); $("#scSweepG").style.display = "none";
-  const pc = p => p < .005 ? "<1%" : pct(p), inj = p => 1 - Math.pow(1 - p, INJ_SHARE), nm = p => 1 - Math.pow(1 - p, 1 - INJ_SHARE), conf = logged >= 10 ? "Partial" : logged ? "Low" : "Very low";
-  $("#scK").innerHTML = [["Potential injury areas", red.length, "highest alert: act before the shift"], ["Potential near-miss areas", amb.length, "extra controls today"], ["No warning signs", done.length - red.length - amb.length, "normal controls still apply"], ["Scan confidence", conf, logged ? `${logged} day${logged === 1 ? "" : "s"} of real logs` : "no real site records yet"]].map(([a, v, n], j) => `<div class="tile"><div class="k">${a}</div><div class="v${j === 3 ? " sig" : ""}" style="font-size:28px">${v}</div><div class="n">${n}</div></div>`).join("");
+  const pc = p => p < .005 ? "<1%" : pct(p), inj = p => 1 - Math.pow(1 - p, INJ_SHARE), nm = p => 1 - Math.pow(1 - p, 1 - INJ_SHARE), conf = demo ? "Demo data" : logged >= 10 ? "Partial" : logged ? "Low" : "Very low";
+  $("#scK").innerHTML = [["Potential injury areas", red.length, "highest alert: act before the shift"], ["Potential near-miss areas", amb.length, "extra controls today"], ["No warning signs", done.length - red.length - amb.length, "normal controls still apply"], ["Scan confidence", conf, demo ? "sample logs: nothing here is real" : logged ? `${logged} day${logged === 1 ? "" : "s"} of real logs` : "no real site records yet"]].map(([a, v, n], j) => `<div class="tile"><div class="k">${a}</div><div class="v${j === 3 ? " sig" : ""}" style="font-size:28px">${v}</div><div class="n">${n}</div></div>`).join("");
   $("#scTab").innerHTML = "<tr><th class='r'>No.</th><th>Zone</th><th>Result</th><th class='r'>Walk order</th><th class='r'>Workers</th><th class='r'>Injury, 5 days</th><th class='r'>Near miss, 5 days</th><th>Most likely</th><th>Why</th><th>First control</th></tr>" + rows.map(o => { const zn = esc(zoneById[o.z].name), w = walk.indexOf(o) + 1; if (!o.r) { const nx = H.crew[o.z].findIndex((v, i) => i > day && v > 0); return `<tr><td class="r">${o.k}</td><td><b>${zn}</b></td><td><span class="sct n">No work</span></td><td class="r"></td><td class="r">0</td><td class="r">–</td><td class="r">–</td><td colspan="3" class="note">${nx < 0 ? "No more work planned" : "Work starts " + new Date(H.days[nx] + "T12:00").toLocaleDateString("en-CA", { month: "short", year: "numeric" })}</td></tr>`; }
     const dr = o.r[2].map(i => D.drivers[i]), ct = dr.length && D.actions[dr[0]] ? D.actions[dr[0]] : D.zone_rule[o.z]; return `<tr><td class="r">${o.k}</td><td><b>${zn}</b></td><td><span class="sct b${o.b}">${SC_NAME[o.b]}</span></td><td class="r">${w || ""}</td><td class="r">${H.crew[o.z][day] || 0}</td><td class="r">${pc(inj(o.r[0]))}</td><td class="r">${pc(nm(o.r[0]))}</td><td>${esc(likelyEvents(o.z))}</td><td>${esc(dr.join(", ") || "Crew size only")}</td><td>${esc(ct.action.split(";")[0])}<span class="ref" style="display:block;font-size:12px;color:var(--muted)">${esc(ct.ref[PROV] || "")}</span></td></tr>`; }).join("");
   $("#scN").textContent = `This scan reads the records the system holds; it can't see the site. Colours show relative risk from the programme, weather and any logs, not incidents that have been detected or will happen. "No warning signs" doesn't mean no incident: in testing on simulated logs, ${pct(1 - M.warned_share)} of events had no warning. The model can't tell in advance whether an event will be an injury or a near miss, so those two chances assume a quarter of events are injuries. The zone model is trained on simulated logs.`;
@@ -2130,13 +2131,13 @@ function scoreUpload(text, prov, name) {
   if (fileDays.length < 20) notes.push("Fewer than 20 work days: the model reads 5- to 20-day windows, so early scores rest on little history.");
   const base = S.sources.provinces[prov].rate, th = S.by_province[prov].thresholds;
   const U = { days, logs: {}, crew: {}, risk: {}, weather: { gust: [], humidex: [], rain: [], tmin: [], snow: [], dir: [] }, fc: {}, live: new Set(), events: [],
-    upload: true, prov, name: name || "Your site", base_rate: base, th };
+    upload: true, prov, name: name || "Your site", base_rate: base, th, sample: /SAMPLE:/.test(text), fileDays };
   let filled = 0;
   days.forEach(d => { const W = wxDay[d] || {}, ws = YEARS.map(y => climateDay(d, y)), avg = k => ws.reduce((a, w) => a + w[k], 0) / ws.length;
     if (W.gust === undefined || W.humidex === undefined) filled++;
     U.weather.gust.push(W.gust ?? avg("gust")); U.weather.humidex.push(W.humidex ?? avg("humidex")); U.weather.rain.push(W.rain ?? Math.round(avg("rain")));
     const tmin = W.tmin ?? avg("tmin"); U.weather.tmin.push(tmin); U.weather.snow.push(false); U.weather.dir.push(-1); });
-  if (filled) notes.push(`${filled} day${filled > 1 ? "s" : ""} without wind or humidex in your file use the seasonal outlook (Vancouver, 2023–2025).`);
+  if (filled) notes.push(`${filled} day${filled > 1 ? "s" : ""} without wind or humidex in your file use the seasonal outlook for your site.`);
   ZIDS.forEach(z => { U.logs[z] = Object.fromEntries(FIELDS_ALL.map(k => [k, []])); U.crew[z] = []; U.risk[z] = [];
     days.forEach(d => { const v = recs[d + "|" + z], busy = v && v.crew > 0; U.crew[z].push(busy ? v.crew : 0);
       FIELDS_ALL.forEach(k => U.logs[z][k].push(busy ? (v[k] ?? (k === "crew" ? v.crew : +BASE[z][k].toFixed(2))) : (k === "crew" ? 0 : null))); }); });
@@ -2185,11 +2186,17 @@ function ctlImpactHtml(viewName) {
     Object.entries(by).sort((a, b) => b[1].cut / b[1].n - a[1].cut / a[1].n).map(([g, v]) => `<tr><td>${esc(D.actions[g].action.split(";")[0])} <span class="note" style="margin:0">(${esc(g)})</span></td><td class="r">${v.n}</td><td class="r">${(100 * v.cut / v.n).toFixed(1)} points</td></tr>`).join("") +
     `</table><p class="note">Modelled effect: the zone re-scored with that warning sign returned to its normal level. Real effect shows over the following months in the incident column above.</p>`;
 }
+function uSync() { const n = Object.values(localDocs).filter(x => x.fromFile).length; $("#uUse").hidden = !upRes; $("#uDrop2").hidden = !n; $("#uUseN").textContent = n ? `${n} days from a file are feeding the site scan, in this browser only.` : upRes ? "Loads these days into the forecast and scan in this browser only. They aren't shared." : ""; }
+function uLoad() { const U = upRes.U, t = todayLocal(); let n = 0, past = D.days[D.days.length - 1]; U.fileDays.forEach(d => { if (d > t || d <= past) return; const i = U.days.indexOf(d), zones = {}; ZIDS.forEach(z => { const c = U.crew[z][i]; zones[z] = c > 0 ? Object.fromEntries(FIELDS_ALL.map(k => [k, U.logs[z][k][i]])) : { crew: 0 }; });
+    const o = outlook(d); localDocs[d] = { date: d, weather: { gust: o.gust, humidex: o.humidex, wet: o.wet, freeze: o.freeze, cold: o.cold }, zones, events: U.events.filter(e => e.d === d).map(e => ({ zone: e.z, kind: "Incident (from file)" })), fromFile: true, sample: !!U.sample, visited: ZIDS.filter(z => zones[z].crew > 0) }; n++; });
+  uStore(); PROJ = null; uSync(); if (view === "proj") setView("proj"); $("#uUseN").textContent = `Loaded ${n} days${U.sample ? " of sample data, labelled as demo in the scan" : ""}, in this browser only.`; if ($("#scMap svg")) runScan(true); }
+function uStore() { try { localStorage.setItem("ssew.docs", JSON.stringify(localDocs)); } catch (_) {} }
+function uUnload() { Object.keys(localDocs).forEach(k => { if (localDocs[k].fromFile) delete localDocs[k]; }); uStore(); PROJ = null; uSync(); if (view === "proj") setView("proj"); if ($("#scMap svg")) runScan(true); }
 function showUpload(res) {
   const st = $("#uStatus");
   $("#uErr").innerHTML = res.errors && res.errors.length ? "<tr><th>Problems found</th></tr>" + res.errors.slice(0, 25).map(e => `<tr><td>${esc(e)}</td></tr>`).join("") + (res.errors.length > 25 ? `<tr><td>…and ${res.errors.length - 25} more.</td></tr>` : "") : "";
   if (!res.U) { st.textContent = "Couldn't score this file."; st.className = "status warn"; $("#uOut").hidden = true; return; }
-  upRes = res; UP = res.U; $("#vUp").hidden = false;
+  upRes = res; UP = res.U; $("#vUp").hidden = false; uSync();
   const U = UP, N = U.days.length, cnt = [0, 0, 0]; ZIDS.forEach(z => U.risk[z].forEach(r => r && cnt[r[1]]++));
   st.textContent = `Read ${res.good} of ${res.rows} rows and scored every zone-day from ${U.days[0]} to ${U.days[N - 1]}, ${NMP[U.prov]} cut-offs and citations.` + (res.badN ? ` ${res.badN} row${res.badN > 1 ? "s" : ""} skipped (listed below).` : "") + (res.notes.length ? " " + res.notes.join(" ") : "");
   st.className = "status " + (res.badN ? "warn" : "ok");
@@ -2249,7 +2256,7 @@ function dataInit() {
     setTimeout(() => { try { showUpload(scoreUpload(text, $("#uProv").value, $("#uSite").value.trim() || name)); } catch (e) { showUpload({ errors: ["Couldn't read this file: " + (e && e.message || e)] }); } }, 20); };
   const readFile = f => { if (!f) return; if (f.size > 5e6) return showUpload({ errors: ["The file is over 5 MB; split it by year."] });
     f.text().then(t => run(t, f.name.replace(/\.csv$/i, ""))).catch(() => showUpload({ errors: ["Couldn't read the file."] })); };
-  $("#uFile").onchange = e => readFile(e.target.files[0]);
+  $("#uFile").onchange = e => readFile(e.target.files[0]); $("#uUse").onclick = uLoad; $("#uDrop2").onclick = uUnload; uSync();
   const dz = $("#uDrop"); ["dragenter", "dragover"].forEach(t => dz.addEventListener(t, e => { e.preventDefault(); dz.classList.add("over"); }));
   ["dragleave", "drop"].forEach(t => dz.addEventListener(t, e => { e.preventDefault(); dz.classList.remove("over"); }));
   dz.addEventListener("drop", e => readFile(e.dataTransfer.files[0]));
