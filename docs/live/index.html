@@ -196,6 +196,12 @@ table.form td{padding:4px 6px}
 .osf input,.osf select{font:inherit;font-size:15px;width:100%;box-sizing:border-box;color:#13233a;background:#fff;border:1px solid transparent;border-radius:8px;padding:9px 10px}
 .oserr{color:#ffb4a8;font-size:14px;min-height:1.3em;margin:0}
 .orgline{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding-block:10px 0;font-size:15px}.orgline b{font:800 18px var(--f-head);overflow-wrap:anywhere}.orgline span{color:var(--muted);min-width:0;overflow-wrap:anywhere}.orgline button{font:inherit;font-size:13px;background:none;border:0;color:var(--ink);text-decoration:underline;cursor:pointer;padding:0}
+.fdh{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:flex-start}.fdh>div{min-width:0;flex:1 1 280px}
+.fdc{display:inline-block;min-width:44px;text-align:center;border-radius:6px;padding:3px 5px;font:700 12.5px var(--f-head);font-variant-numeric:tabular-nums}
+.fdc.b2{background:var(--red);color:#fff}.fdc.b1{background:var(--amber);color:#1a1205}.fdc.b0{background:color-mix(in srgb,var(--green) 20%,var(--surface));color:var(--ink)}.fdc.n{background:var(--plane);color:var(--muted);font-weight:400}
+#fdTab tr[data-z]{cursor:pointer}#fdTab td{font-size:13.5px}#fdTab .ref{display:block;font-size:12px;color:var(--muted)}
+#fdZ input[type=text]{width:100%;min-width:190px;box-sizing:border-box;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:6px;padding:4px 6px}#fdZ input[type=number]{width:76px;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:6px;padding:4px 6px}
+.zcrew{font:600 15px var(--f-body);fill:var(--muted)}
 .sitebar{background:var(--plane);border-bottom:1px solid var(--border)}
 .sb{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding-block:10px;font-size:13.5px}
 .sb label{display:flex;gap:6px;align-items:center;color:var(--muted)}
@@ -261,6 +267,13 @@ footer b{color:var(--navy-ink)}
 
 <main><div class="wrap">
 <section id="live">
+  <div class="card" id="fdCard" style="margin-bottom:16px">
+    <div class="fdh"><div><h2 id="fdT" style="margin:0"></h2><p class="note" id="fdL" style="margin:2px 0 0"></p></div><button class="btn" id="fdEd">Edit zones</button></div>
+    <div class="grid g4" id="fdK" style="margin:12px 0"></div>
+    <div class="scroll"><table class="t" id="fdTab"></table></div>
+    <p class="note" id="fdIdle"></p><p class="note" id="fdN" style="margin-bottom:0"></p>
+    <div id="fdEdit" hidden style="margin-top:12px"><h3>Zones on this site</h3><p class="note" style="margin-top:0">Use your own zone names and peak crews. Crews follow the programme, up to the peak you enter. Hazard types and controls stay with the zone type.</p><div class="scroll"><table class="t form" id="fdZ"></table></div><div class="bar" style="margin-top:10px"><button class="btn primary" id="fdS">Save zones</button><button class="btn" id="fdC">Cancel</button></div></div>
+  </div>
   <div class="grid g4" id="kpis" style="margin-bottom:16px"></div>
   <div class="card" style="margin-bottom:16px">
     <div class="bar" id="viewSw" role="group" aria-label="What to show" style="margin-bottom:10px">
@@ -705,9 +718,10 @@ function bizBetween(a, b) {                            // work days in (a, b], b
 let PROJECT_START = "2026-03-02";
 try { PROJECT_START = localStorage.getItem("ssew.start") || PROJECT_START; } catch (_) {}
 const progIdx = d => { let s = PROJECT_START; while (!isBiz(s)) s = addBiz(s, 1); return bizBetween(s, d); };
-const siteFactor = (z, d) => { const a = CA.arch[SITE.type][z] ?? 1, m = +d.slice(5, 7); const win = [11, 12, 1, 2, 3, 4].includes(m), core = [12, 1, 2, 3].includes(m);
-  return a * (CA.north.includes(SITE.jur) ? (win ? .35 : 1) : SITE.type === "civil" && core ? .5 : 1); };
-const crewAt = (z, d) => { const i = progIdx(d); return i >= 0 && i < D.days.length ? Math.round((D.crew[z][i] || 0) * siteFactor(z, d)) : 0; };
+const siteSeason = d => { const m = +d.slice(5, 7); return CA.north.includes(SITE.jur) ? ([11, 12, 1, 2, 3, 4].includes(m) ? .35 : 1) : SITE.type === "civil" && [12, 1, 2, 3].includes(m) ? .5 : 1; };
+const siteFactor = (z, d) => (CA.arch[SITE.type][z] ?? 1) * siteSeason(d);
+const crewAt = (z, d) => { const i = progIdx(d); if (i < 0 || i >= D.days.length) return 0; const v = typeof ORG !== "undefined" && ORG && ORG.zones && ORG.zones[z]; if (v && v.on === false) return 0;
+  const f = v && v.peak != null ? (v.peak / Math.max(1, ...D.crew[z])) * siteSeason(d) : siteFactor(z, d); return Math.round((D.crew[z][i] || 0) * f); };
 const phaseAt = d => { const i = progIdx(d); return i < 0 ? "Before the project starts" : i >= D.days.length ? "Project complete" : (phaseOf(D.days[i]) || "Mobilising") + ` · programme day ${i + 1} of ${D.days.length}`; };
 function climateDay(d, y) {                            // a live forecast where there is one; otherwise the same calendar day in a recorded year (real ECCC weather)
   if (LFC[d]) return LFC[d];
@@ -964,7 +978,8 @@ DRAW_LATE.inspect = () => {
 const ORG_KEY = "ssew.org", OS = () => $("#openScr"); let ORG = null, orgDoc = null, entered = false;
 function orgClean(o) {
   if (!o || typeof o.company !== "string" || !o.company.trim()) return null; const j = CA.jur[o.jur] ? o.jur : SITE.jur, cs = CA.jur[j].cities, c = cs.find(x => x.name === o.city) || cs[0], s = v => typeof v === "string" ? v.trim().slice(0, 160) : "";
-  return { company: s(o.company), site: s(o.site), address: s(o.address), jur: j, city: c.name, type: CA.types[o.type] ? o.type : c.type, start: /^\d{4}-\d{2}-\d{2}$/.test(o.start || "") ? o.start : "" };
+  const zo = {}; if (o.zones && typeof o.zones === "object") ZIDS.forEach(z => { const v = o.zones[z]; if (v && typeof v === "object") zo[z] = { name: s(v.name).slice(0, 60), peak: Number.isFinite(v.peak) ? Math.max(0, Math.min(500, Math.round(v.peak))) : null, on: v.on !== false }; });
+  return { zones: Object.keys(zo).length ? zo : undefined, company: s(o.company), site: s(o.site), address: s(o.address), jur: j, city: c.name, type: CA.types[o.type] ? o.type : c.type, start: /^\d{4}-\d{2}-\d{2}$/.test(o.start || "") ? o.start : "" };
 }
 try { ORG = orgClean(D.client) || orgClean(JSON.parse(localStorage.getItem(ORG_KEY) || "null")); } catch (_) { ORG = orgClean(D.client); }
 if (ORG) { SITE.jur = ORG.jur; SITE.city = ORG.city; SITE.type = ORG.type; if (ORG.start) PROJECT_START = ORG.start; }
@@ -1006,16 +1021,56 @@ function openForm() {
 function orgPersist() { try { localStorage.setItem(ORG_KEY, JSON.stringify(ORG)); } catch (_) {} if (orgDoc) orgDoc.set(ORG).catch(() => {}); }   // viewers who can't write the shared record keep it in this browser
 function saveOrg(o) {
   ORG = o; orgPersist(); if (o.start) setStart(o.start); const was = entered; entered = true;     // setSite fetches the forecast
-  setSite({ jur: o.jur, city: o.city, type: o.type }); entered = was; drawOrg(); entered = true; closeOpen(); show("live");
+  setSite({ jur: o.jur, city: o.city, type: o.type }); entered = was; drawOrg(); entered = true; closeOpen(); show("live"); applyZones(); const fc = $("#fdCard"); if (fc) fc.scrollIntoView();
 }
 const closeOpen = () => { OS().hidden = true; OS().innerHTML = ""; document.body.style.overflow = ""; };
-function enterApp() { closeOpen(); if (!entered) { entered = true; loadForecast(false).then(() => { if (view === "proj") setView("proj"); }); } }
+function enterApp() { closeOpen(); const fc = $("#fdCard"); if (fc && ORG) fc.scrollIntoView(); if (!entered) { entered = true; loadForecast(false).then(() => { if (view === "proj") setView("proj"); }); } }
 async function orgConnect() {                            // the page's shared record, so every safety officer sees the same company
   if (D.client) return;
   try { const db = window.claude && await window.claude.use("db"); if (!db) return; orgDoc = db.doc("config/site");
     orgDoc.onSnapshot(sn => { const v = orgClean(sn && sn.data && sn.data()); if (!v || JSON.stringify(v) === JSON.stringify(ORG)) return; ORG = v;
-      try { localStorage.setItem(ORG_KEY, JSON.stringify(ORG)); } catch (_) {} if (!entered) { SITE.jur = v.jur; SITE.city = v.city; SITE.type = v.type; loadClimate(); PROJ = null; drawSiteBar(); openShow(); } else setSite({ jur: v.jur, city: v.city, type: v.type }); drawOrg(); }, () => {});
+      try { localStorage.setItem(ORG_KEY, JSON.stringify(ORG)); } catch (_) {} if (!entered) { SITE.jur = v.jur; SITE.city = v.city; SITE.type = v.type; loadClimate(); PROJ = null; drawSiteBar(); applyZones(); openShow(); } else { applyZones(); setSite({ jur: v.jur, city: v.city, type: v.type }); } drawOrg(); }, () => {});
   } catch (_) {}
+}
+/* ================================================================== the next five work days at this site, zone by zone */
+const ZDEF = {}; D.zones.forEach(z => { ZDEF[z.id] = { name: z.name, peak: Math.max(...D.crew[z.id]) }; });
+function applyZones() { const Z = (ORG && ORG.zones) || {}; D.zones.forEach(z => { z.name = (Z[z.id] && Z[z.id].name) || ZDEF[z.id].name; }); drawZoneLabels(); }
+function drawZoneLabels() {
+  D.zones.forEach(z => { const e = document.getElementById("zl-" + z.id); if (!e || !z.box) return;
+    const room = Math.floor((Math.max(z.box[2], z.box[2] < 100 ? z.box[3] : 0) - 16) / 13.5), lines = [""];
+    z.name.toUpperCase().split(/\s+/).forEach(w => { const L = lines[lines.length - 1]; if (!L || (L + " " + w).length <= room) lines[lines.length - 1] = L ? L + " " + w : w; else lines.push(w); });
+    const two = lines.slice(0, 2); if (lines.length > 2) two[1] = two[1].slice(0, Math.max(1, room - 1)) + "…"; const x = e.getAttribute("x");
+    e.textContent = ""; two.forEach((L, k) => { const s = document.createElementNS(NS, "tspan"); s.setAttribute("x", x); s.setAttribute("dy", k ? "1.15em" : "0"); s.textContent = L; e.appendChild(s); }); });
+}
+function fiveDay() {
+  if (!$("#fdTab")) return; const idx = [0, 1, 2, 3, 4].map(k => day + k).filter(i => i < H.days.length), sd = d => new Date(d + "T12:00").toLocaleDateString("en-CA", { month: "short", day: "numeric" });
+  const wd = d => new Date(d + "T12:00").toLocaleDateString("en-CA", { weekday: "short" }), pc = p => p < .005 ? "<1%" : pct(p);
+  const who = H.proj ? (ORG ? [ORG.company, ORG.site].filter(Boolean).join(" · ") : "Sample site") : H.upload ? H.name : "Simulated site, Burnaby (recorded history)";
+  $("#fdT").textContent = `${who}: next 5 work days`;
+  $("#fdL").textContent = `${sd(H.days[idx[0]])} to ${sd(H.days[idx[idx.length - 1]])}${H.proj && ORG ? " · " + orgLoc(ORG) : ""}${H.proj ? " · " + phaseAt(H.days[idx[0]]) : ""}`;
+  const rows = ZIDS.map(z => ({ z, r: effRisk(z, day), days: idx.map(i => H.risk[z][i]), crew: idx.map(i => H.crew[z][i] || 0) }));
+  const on = rows.filter(o => o.r || o.days.some(Boolean) || o.crew.some(c => c > 0)).sort((a, b) => (b.r ? b.r[0] : -1) - (a.r ? a.r[0] : -1));
+  const any = 1 - on.reduce((a, o) => a * (1 - (o.r ? o.r[0] : 0)), 1), top = on.find(o => o.r), peak = Math.max(0, ...idx.map((_, k) => rows.reduce((a, o) => a + o.crew[k], 0)));
+  const flagged = on.filter(o => o.r && o.r[1] > 0).length;
+  $("#fdK").innerHTML = [["Chance of an injury or serious near miss", on.length ? pc(any) : "–", "anywhere on site, next 5 work days"], ["Riskiest zone", top ? esc(zoneById[top.z].name) : "None working", top ? `${pc(top.r[0])} · ${BAND[top.r[1]]}` : ""], ["Zones working", `${on.length} of ${ZIDS.length}`, flagged ? `${flagged} on amber or red` : "none on amber or red"], ["Peak crew", fmt(peak), "workers on the busiest of these days"]]
+    .map(([k, v, n], j) => `<div class="tile"><div class="k">${k}</div><div class="v${j === 0 ? " sig" : ""}" style="font-size:${j === 1 ? 20 : 30}px;overflow-wrap:anywhere">${v}</div><div class="n">${n}</div></div>`).join("");
+  const dh = idx.map(i => `<th class="r">${wd(H.days[i])} ${sd(H.days[i]).split(" ")[1]}</th>`).join("");
+  $("#fdTab").innerHTML = `<tr><th>Zone</th><th class="r">Workers</th>${dh}<th>What could happen</th><th>Warning signs</th><th>First control</th></tr>` + (on.map(o => { const dr = o.r ? o.r[2].map(k => D.drivers[k]) : [], c = dr.length && D.actions[dr[0]] ? D.actions[dr[0]] : D.zone_rule[o.z], lo = Math.min(...o.crew), hi = Math.max(...o.crew);
+    return `<tr data-z="${o.z}"${selZone === o.z ? ' style="background:var(--plane)"' : ""}><td><b>${esc(zoneById[o.z].name)}</b></td><td class="r">${lo === hi ? lo : lo + "–" + hi}</td>${o.days.map(r => `<td class="r">${r ? `<span class="fdc b${r[1]}">${pc(r[0])}</span>` : '<span class="fdc n">–</span>'}</td>`).join("")}<td>${esc(likelyEvents(o.z))}</td><td>${esc(dr.join(", ") || "Crew size only")}</td><td>${esc(c.action.split(";")[0])}<span class="ref">${esc(c.ref[PROV] || "")}</span></td></tr>`; }).join("") || `<tr><td colspan="${5 + idx.length}">No zones are working in these days under this project calendar.</td></tr>`);
+  document.querySelectorAll("#fdTab tr[data-z]").forEach(tr => tr.onclick = () => { selZone = selZone === tr.dataset.z ? null : tr.dataset.z; render(); });
+  const off = rows.filter(o => !on.includes(o)).map(o => { const k = H.crew[o.z].findIndex((c, i) => i > day && c > 0); return k < 0 ? `${zoneById[o.z].name} (no more work planned)` : `${zoneById[o.z].name} (from ${new Date(H.days[k] + "T12:00").toLocaleDateString("en-CA", { month: "short", year: "numeric" })})`; });
+  $("#fdIdle").textContent = off.length ? "Not working in these days: " + off.join("; ") + "." : "";
+  $("#fdN").textContent = (H.proj ? "Each day's figure is that zone's chance of an event in the five work days from that day. It comes from the programme, the weather and typical readings until you log real days, and it's a risk level, not a prediction of a particular incident. The zone model is trained on simulated logs." : "Each day's figure is that zone's chance of an event in the five work days from that day.");
+  $("#fdEd").hidden = !H.proj || !!D.client;
+}
+function zoneEditor() {
+  if (!ORG) { openForm(); return; } const Z = ORG.zones || {}, base = z => { const v = Z[z]; return v && v.peak != null ? v.peak : Math.round(ZDEF[z].peak * (CA.arch[SITE.type][z] ?? 1)); };
+  $("#fdZ").innerHTML = "<tr><th>Zone type</th><th>Name on this site</th><th class='r'>Peak workers</th><th>In this project</th></tr>" + ZIDS.map(z => { const on = Z[z] ? Z[z].on !== false : base(z) > 0;
+    return `<tr><td>${esc(ZDEF[z].name)}</td><td><input type="text" maxlength="60" data-n="${z}" aria-label="Name for ${esc(ZDEF[z].name)}" value="${esc((Z[z] && Z[z].name) || ZDEF[z].name)}"></td><td class="r"><input type="number" min="0" max="500" data-p="${z}" aria-label="Peak workers, ${esc(ZDEF[z].name)}" value="${base(z)}"></td><td><input type="checkbox" data-o="${z}" aria-label="${esc(ZDEF[z].name)} in this project"${on ? " checked" : ""}></td></tr>`; }).join("");
+  $("#fdEdit").hidden = false; $("#fdEd").hidden = true;
+  $("#fdC").onclick = () => { $("#fdEdit").hidden = true; $("#fdEd").hidden = false; };
+  $("#fdS").onclick = () => { const out = {}; ZIDS.forEach(z => { const n = document.querySelector(`[data-n="${z}"]`).value.trim(), p = +document.querySelector(`[data-p="${z}"]`).value; out[z] = { name: n && n !== ZDEF[z].name ? n : "", peak: Number.isFinite(p) ? Math.max(0, Math.min(500, Math.round(p))) : null, on: document.querySelector(`[data-o="${z}"]`).checked }; });
+    ORG.zones = out; orgPersist(); applyZones(); PROJ = null; $("#fdEdit").hidden = true; $("#fdEd").hidden = false; setView("proj"); };
 }
 function ticker(i) {
   const items = [];
@@ -1044,7 +1099,7 @@ const applied = {};                                       // zone -> set of appl
 const testStart = () => H.days.findIndex(d => d > D.train_end);
 function kpis() {
   $("#kpis").innerHTML = [
-    ["Events flagged in advance", pct(M.warned_share), `${M.events_test} test events, ${NSITE} sites, 3 provinces`],
+    ["Events flagged in advance", pct(M.warned_share), `${M.events_test} test events, simulated logs, ${NSITE} sites, 13 jurisdictions`],
     ["Red-day lift", M.bands[0].lift.toFixed(1) + "×", "event rate on red zone-days vs average"],
     ["Ranking quality (AUC)", M.auc.toFixed(2), `crew plan alone ${M.auc_base.toFixed(2)} · ceiling ${M.auc_oracle.toFixed(2)}`],
     ["Live feed", `<span id="kLive">0</span> days`, "logged on this page and scored live"],
@@ -1067,9 +1122,11 @@ function plan() {
     const xs = z.poly.map(q => q[0]), ys = z.poly.map(q => q[1]);
     const cx = (Math.min(...xs) + Math.max(...xs)) * 5, cy = (Math.min(...ys) + Math.max(...ys)) * 5, w = (Math.max(...xs) - Math.min(...xs)) * 10;
     z.c = [cx, cy]; z.w = w; z.box = [Math.min(...xs) * 10, Math.min(...ys) * 10, w, (Math.max(...ys) - Math.min(...ys)) * 10];
-    if (w >= 100) { el("text", { x: cx, y: cy - 8, "text-anchor": "middle", class: "zlabel" }, g).textContent = w > 230 ? z.name.toUpperCase() : z.id;
-      el("text", { x: cx, y: cy + 26, "text-anchor": "middle", class: "zpct", id: "pc-" + z.id }, g); }
-    else el("text", { x: cx, y: cy, "text-anchor": "middle", class: "zlabel", transform: `rotate(-90 ${cx} ${cy})` }, g).textContent = z.id;
+    const h = (Math.max(...ys) - Math.min(...ys)) * 10;
+    if (w >= 100 && h >= 100) { el("text", { x: cx, y: cy - 34, "text-anchor": "middle", class: "zlabel", id: "zl-" + z.id }, g);
+      el("text", { x: cx, y: cy + 26, "text-anchor": "middle", class: "zpct", id: "pc-" + z.id }, g); el("text", { x: cx, y: cy + 52, "text-anchor": "middle", class: "zcrew", id: "cr-" + z.id }, g); }
+    else if (w >= 100) { el("text", { x: cx, y: cy + 8, "text-anchor": "middle", class: "zlabel", id: "zl-" + z.id }, g); }
+    else el("text", { x: cx, y: cy, "text-anchor": "middle", class: "zlabel", id: "zl-" + z.id, transform: `rotate(-90 ${cx} ${cy})` }, g);
   });
   el("g", { id: "pulses" }, svg); el("g", { id: "icons" }, svg);
   const c = zoneById.CRN; const [cx, cy] = [c.poly[0][0] * 10 + 80, c.poly[0][1] * 10 + 80];
@@ -1162,7 +1219,8 @@ function render() {
     const p = document.querySelector(`polygon[data-z="${z.id}"]`);
     p.style.fill = zoneFill(r); p.classList.toggle("sel", selZone === z.id);
     const t = document.getElementById("pc-" + z.id);
-    if (t) { t.textContent = r ? pct(r[0]) : ""; t.style.fill = r ? css(BCOL[r[1]]) : "var(--muted)"; }
+    const tc = document.getElementById("cr-" + z.id), cn = H.crew[z.id][day] || 0; if (tc) tc.textContent = cn > 0 ? `${cn} workers` : r ? "crew arriving" : "no work";
+    if (t) { t.textContent = r ? (r[0] < .005 ? "<1%" : pct(r[0])) : ""; t.style.fill = r ? css(BCOL[r[1]]) : "var(--muted)"; }
     if (r && r[1] === 2) el("polygon", { points: z.poly.map(([x, y]) => `${x * 10},${y * 10}`).join(" "), class: "pulse" }, pulses);
     if (base && base[1] > 0) {
       const [x, y, w] = z.box; const gi = el("g", { class: "warnicon" }, el("g", { transform: `translate(${x + w - 34},${y + 30})` }, icons));
@@ -1174,7 +1232,7 @@ function render() {
       el("circle", { r: 18, fill: "var(--green)", stroke: "var(--surface)", "stroke-width": 3 }, gs);
       el("text", { y: 7, "text-anchor": "middle", style: "font-size:18px;fill:#fff" }, gs).textContent = "⛨"; }
   });
-  const craneOn = H.upload ? (H.crew.CRN[day] || 0) > 0 : H.proj ? (k => k >= CRANE_IDX[0] && k <= CRANE_IDX[1])(progIdx(d)) : d >= D.crane[0] && d <= D.crane[1];
+  const craneOn = H.upload ? (H.crew.CRN[day] || 0) > 0 : H.proj ? (H.crew.CRN[day] || 0) > 0 : d >= D.crane[0] && d <= D.crane[1];
   $("#crane").style.display = craneOn ? "" : "none";
   const fcx = featX("CRN", day), windy = fcx[FI.gust_fc] >= D.triggers.gust;
   $("#jib").classList.toggle("locked", windy || reduced); $("#craneLock").style.display = windy && craneOn ? "" : "none";
@@ -1189,7 +1247,7 @@ function render() {
     else { el("circle", { cx: x, cy: y, r: 13, fill: "var(--red)", stroke: "var(--surface)", "stroke-width": 2.5 }, g); el("path", { d: `M${x - 6},${y} H${x + 6} M${x},${y - 6} V${y + 6}`, stroke: "#fff", "stroke-width": 3 }, g); }
     g.addEventListener("mousemove", ev => showTip(ev, `<b>${e.k}${e.s ? " (serious)" : ""}</b><br>${z.name}<br>${e.f || ""}`)); g.addEventListener("mouseleave", hideTip);
   });
-  weatherPanel(); alertList(); cursor(); ticker(day);
+  weatherPanel(); alertList(); cursor(); ticker(day); fiveDay();
 }
 
 function weatherPanel() {
@@ -2773,7 +2831,7 @@ addEventListener("hashchange", () => show((location.hash || "#live").slice(1)));
 connectFeed(); connectControls(); connectReports();
 drawOrg(); if (D.client) ["#sbJ", "#sbC", "#sbT"].forEach(id => $(id).disabled = true);
 if (ORG) openShow(); else { OS().hidden = false; document.body.style.overflow = "hidden"; setTimeout(() => { if (!ORG && !entered) openForm(); }, 700); }
-orgConnect();
+orgConnect(); applyZones(); $("#fdEd").onclick = zoneEditor; fiveDay();
 $("#bLang").innerHTML = Object.entries(LANGS).map(([k, L]) => `<option value="${k}">${L.name}</option>`).join("");
 </script>
 
