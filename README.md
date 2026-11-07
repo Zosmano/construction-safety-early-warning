@@ -109,11 +109,12 @@ A page hosted on claude.ai can't reach other websites, so that copy shows a save
 - **Daily log.** One zone at a time on a phone, with large buttons and only the current day's working zones: workers, near misses, hazards, housekeeping, PPE gaps, new workers, overtime, trades, permit problems and any incident. Zones not logged use typical readings and are named before saving. Link to it with `#today`.
 - **Photo walk.** In the Daily log, each working zone takes its own photos. Claude drafts findings on the viewer's own account, a person confirms or rejects each one, and only confirmed findings count as hazards. No images are saved. The scan reports how many zones were checked.
 - **Exact, linked citations.** `ssew/citations.py` gives 234 of the 299 control-and-jurisdiction pairs an exact section number and heading, read in the official text, and a plain summary written for this project. The summary isn't the wording of the law. Each link opens the official text at that section (`ssew/citation_links.json`):
-  - **Section anchors** (112 citations): WorkSafeBC, BC Laws, Légis Québec, Manitoba's Act and its HTML regulation, New Brunswick, Newfoundland and Labrador, and Ontario's Act.
-  - **Heading anchors** (23): Ontario's regulation and Nova Scotia's regulations mark headings only, so the link opens at the heading above the section. Where that's more than a few paragraphs above, the summary says to scroll down.
+  - **Section anchors** (104 citations): WorkSafeBC, BC Laws, Légis Québec, Manitoba's Act and its HTML regulation, New Brunswick, and Newfoundland and Labrador.
+  - **Heading anchors** (11): Nova Scotia's regulations mark headings only, so the link opens at the heading of the section.
+  - **Text links** (21): Ontario's e-Laws loads its text in stages, which throws off anchor jumps, so its links highlight the first words of the section (`#:~:text=`).
   - **PDF only** (70): Alberta, Saskatchewan, Nova Scotia's Act, PEI and the Northwest Territories publish these only as PDFs. The link asks the viewer to open at the page (`#page=N`), and the summary gives the page, because not every PDF viewer honours it.
   - **No anchors** (13): Yukon's regulation pages have none. The link tries a text link, and the summary says which section to scroll to.
-  - **Download only** (15): Nunavut. The summary gives the page in the PDF.
+  - **Nunavut** (15): links to the official PDF download, and the summary gives the page.
   - **Sources:** Alberta's links use the Code consolidated to March 31, 2025.
 
   The other 65 pairs keep the law and topic, because no specific section was confirmed; most are in PEI (16), Yukon (10) and Nunavut (8). The Yukon and PEI Acts couldn't be read, and no lawyer has reviewed any of this.
