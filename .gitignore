@@ -12,3 +12,5 @@ venv/
 
 # One company's details, for its own copy of the page
 client.json
+# Local service database: tenant data, never commit
+data/*.db
