@@ -267,6 +267,26 @@ python run_all.py --download
 | `report.py` | The nine report dashboards |
 | `nyc.py` | Real-world check on New York City's public construction records |
 
+## Ingestion service (`service/`)
+
+A Python (FastAPI) service that feeds site data to the model automatically, so supervisors don't
+have to type every day into the dashboard. Details and setup are in [`service/README.md`](service/README.md).
+
+- **Signed daily-log webhooks:** HMAC over the raw body, a 5-minute replay window, a secret per
+  tenant and idempotent retries.
+- **No worker identifiers stored:** gate or badge rosters are reduced to counts, and the badge
+  numbers are dropped.
+- **Anonymous worker reports:** tagged with their language, and never sent to an outside
+  translation service automatically.
+- **Weekly programme sync:** reads Primavera P6 or MS Project exports. The Procore and Autodesk
+  connectors wait for developer and sandbox access.
+- **Multi-tenant:** a tenant, sector and zone-layout model, with PostgreSQL row-level security
+  for production.
+- **Scan confidence:** an endpoint using the same rule as the dashboard.
+
+`python -m pytest tests` runs its 16 tests. Pricing and marketing notes are in
+[`docs/commercial_notes.md`](docs/commercial_notes.md).
+
 ## Limits
 
 - **Simulated logs.** The leading indicators are simulated, so the performance numbers show what the method can do with data of this kind, not what any real site will see. A pilot on a contractor's own records is the next step.

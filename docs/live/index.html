@@ -167,7 +167,7 @@ input[type=number]{width:5.2em}
 .ctrl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;margin-top:7px;font-size:13.5px}
 .ctrl button{font:700 11px var(--f-head);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--axis);background:var(--surface);color:var(--ink);border-radius:7px;padding:5px 7px;cursor:pointer;white-space:nowrap}
 .ctrl button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
-.ctrl .ref{display:block;font-size:12px;color:var(--muted)}.refsum{display:block;font-size:12px;font-weight:400;font-style:normal;color:var(--muted);margin-top:1px}
+details.mh{margin:6px 0 10px}details.mh summary{cursor:pointer;font-size:13px;color:var(--muted)}details.mh p{margin:6px 0 0}.ctrl .ref{display:block;font-size:12px;color:var(--muted)}.refsum{display:block;font-size:12px;font-weight:400;font-style:normal;color:var(--muted);margin-top:1px}
 .chart svg{display:block;width:100%;height:auto;overflow:visible}
 .chart text{font:12px var(--f-body);fill:var(--muted)}
 .gl{stroke:var(--grid)} .ax{stroke:var(--axis)}
@@ -518,7 +518,7 @@ footer b{color:var(--navy-ink)}
       <p class="note">Changing the date fills the crews from the project calendar and the five-day outlook from real 2023–2025 Vancouver weather for that time of year, then scores the day. Each click on <b>New example</b> draws a different day, sometimes with a zone going wrong.</p>
     </div>
     <div class="card"><h3>Feed status</h3><div class="status" id="fStatus">Connecting to the shared feed…</div>
-      <p class="note" id="fCalib"></p>
+      <details class="mh"><summary>Model health</summary><p class="note" id="fCalib">No logged days yet, so no recalibration.</p><p class="note">For whoever maintains the model; supervisors can ignore this. The zone model is trained on simulated site logs. Logged days nudge its overall level toward what this site actually records, slowly by design, until real records retrain it.</p></details>
       <div class="scroll"><table class="t" id="fList"></table></div></div>
   </div>
   <div class="card" style="margin-bottom:16px"><h3>Controls record</h3>
@@ -1169,8 +1169,8 @@ async function runScan(fast = false) {
   scStep("zn", "Ten zones scored", `${red.length} potential injury, ${amb.length} potential near miss, ${done.length - red.length - amb.length} no warning signs, ${rows.length - done.length} no work.`);
   // the safety walk: from the gate, through flagged zones, riskiest first
   const walk = done.filter(o => o.b > 0).sort((a, b) => b.r[0] - a.r[0]), start = zoneById.GTE.sc; $("#scRoute").setAttribute("points", walk.length ? [start, ...walk.map(o => zoneById[o.z].sc)].map(q => q.join(",")).join(" ") : ""); $("#scSweepG").style.display = "none";
-  const pc = p => p < .005 ? "<1%" : pct(p), inj = p => 1 - Math.pow(1 - p, INJ_SHARE), nm = p => 1 - Math.pow(1 - p, 1 - INJ_SHARE), conf = demo ? "Demo data" : logged >= 10 ? "Partial" : logged ? "Low" : "Very low";
-  $("#scK").innerHTML = [["Potential injury areas", red.length, "highest alert: act before the shift"], ["Potential near-miss areas", amb.length, "extra controls today"], ["No warning signs", done.length - red.length - amb.length, "normal controls still apply"], ["Scan confidence", conf, demo ? "sample logs: nothing here is real" : logged ? `${logged} day${logged === 1 ? "" : "s"} of real logs` : "no real site records yet"]].map(([a, v, n], j) => `<div class="tile"><div class="k">${a}</div><div class="v${j === 3 ? " sig" : ""}" style="font-size:28px">${v}</div><div class="n">${n}</div></div>`).join("");
+  const pc = p => p < .005 ? "<1%" : pct(p), inj = p => 1 - Math.pow(1 - p, INJ_SHARE), nm = p => 1 - Math.pow(1 - p, 1 - INJ_SHARE), conf = scanConf(demo, inWin.filter(x => !isDemo(x)), day);
+  $("#scK").innerHTML = [["Potential injury areas", red.length, "highest alert: act before the shift"], ["Potential near-miss areas", amb.length, "extra controls today"], ["No warning signs", done.length - red.length - amb.length, "normal controls still apply"], ["Scan confidence", conf.v, conf.n]].map(([a, v, n], j) => `<div class="tile"><div class="k">${a}</div><div class="v${j === 3 ? " sig" : ""}" style="font-size:28px">${v}</div><div class="n">${n}</div></div>`).join("");
   $("#scTab").innerHTML = "<tr><th class='r'>No.</th><th>Zone</th><th>Result</th><th class='r'>Walk order</th><th class='r'>Workers</th><th class='r'>Injury, 5 days</th><th class='r'>Near miss, 5 days</th><th>Most likely</th><th>Why</th><th>First control</th></tr>" + rows.map(o => { const zn = esc(zoneById[o.z].name), w = walk.indexOf(o) + 1; if (!o.r) { const nx = H.crew[o.z].findIndex((v, i) => i > day && v > 0); return `<tr><td class="r">${o.k}</td><td><b>${zn}</b></td><td><span class="sct n">No work</span></td><td class="r"></td><td class="r">0</td><td class="r">–</td><td class="r">–</td><td colspan="3" class="note">${nx < 0 ? "No more work planned" : "Work starts " + new Date(H.days[nx] + "T12:00").toLocaleDateString("en-CA", { month: "short", year: "numeric" })}</td></tr>`; }
     const dr = o.r[2].map(i => D.drivers[i]), ct = dr.length && D.actions[dr[0]] ? D.actions[dr[0]] : D.zone_rule[o.z]; return `<tr><td class="r">${o.k}</td><td><b>${zn}</b></td><td><span class="sct b${o.b}">${SC_NAME[o.b]}</span></td><td class="r">${w || ""}</td><td class="r">${H.crew[o.z][day] || 0}</td><td class="r">${pc(inj(o.r[0]))}</td><td class="r">${pc(nm(o.r[0]))}</td><td>${esc(likelyEvents(o.z))}</td><td>${esc(dr.join(", ") || "Crew size only")}${wk[o.z] && wk[o.z].photos > 0 ? `<br><span class="note" style="margin:0">Photo walk: ${wk[o.z].confirmed || 0} confirmed${wk[o.z].high ? `, ${wk[o.z].high} high severity: fix it now` : ""}</span>` : ""}</td><td>${esc(ct.action.split(";")[0])}<span class="ref" style="display:block;font-size:12px">${refA(ct.ref[PROV], PROV)}</span></td></tr>`; }).join("");
   $("#scN").textContent = `This scan reads the records the system holds; it can't see the site. A high-severity finding confirmed by a person turns its zone red that day, whatever the score. Colours show relative risk from the programme, weather and any logs, not incidents that have been detected or will happen. "No warning signs" doesn't mean no incident: in testing on simulated logs, ${pct(1 - M.warned_share)} of events had no warning. The model can't tell in advance whether an event will be an injury or a near miss, so those two chances assume a quarter of events are injuries. The zone model is trained on simulated logs.`;
@@ -1666,12 +1666,25 @@ function applyDoc(doc) {                                   // add (or replace) a
   H.events = H.events.filter(e => e.d !== doc.date || !e.live).concat((doc.events || []).map(e => ({ d: doc.date, z: e.zone, k: e.kind, f: "Logged on site", live: true })));
   return i;
 }
+/* Scan confidence: how much of the recent site record is real and how current it is. It never rises above "Good":
+   freshness alone can't vouch for the model, which is still trained on simulated logs. */
+function scanConf(demo, real, day) {
+  if (demo) return { v: "Demo data", n: "sample logs: nothing here is real" };
+  if (!real.length) return { v: "Very low", n: "no real site records yet: log a day or connect a feed" };
+  const H = HIST, last = Math.max(...real.map(x => H.days.indexOf(x))), ago = day - last, n = real.length;
+  const v = n >= 15 && ago <= 1 ? "Good" : n >= 5 && ago <= 2 ? "Partial" : "Low";
+  const when = ago <= 0 ? "today" : ago === 1 ? "the work day before" : `${ago} work days earlier`;
+  const sync = feedDocs.map(f => f.source === "api" && Date.parse(f.received_at)).filter(Boolean).sort((a, b) => a - b).pop();
+  const syncTxt = sync && Date.now() - sync < 864e5 ? ` · synced automatically ${Math.max(1, Math.round((Date.now() - sync) / 36e5))} h ago` : "";
+  return { v, n: `${n} of the last 20 work days logged, latest ${when}${syncTxt}` };
+}
 function recalibrate() {                                    // shrink observed vs expected toward 1 (prior of 20 expected events)
   const H = HIST; let exp = 0, obs = 0;
   for (const d of H.live) { const i = H.days.indexOf(d); ZIDS.forEach(z => { const r = H.risk[z][i]; if (r) exp += 1 - Math.pow(1 - r[0], 1 / D.horizon); }); }
   obs = H.events.filter(e => e.live).length;
   const K = 20, f = (K + obs) / (K + exp);
   CALIB = H.live.size ? Math.log(f) : 0;
+  if (!H.live.size) { $("#fCalib").textContent = "No logged days yet, so no recalibration."; return; }
   $("#fCalib").textContent = H.live.size ? `Live recalibration: ×${f.toFixed(2)} on the odds, from ${H.live.size} logged day${H.live.size > 1 ? "s" : ""} (${obs} incident${obs === 1 ? "" : "s"} logged vs ${exp.toFixed(2)} expected). It moves slowly by design until real history builds up.` : "";
 }
 function scoreLiveDays() {
@@ -1836,7 +1849,7 @@ const DRAW = {
 <tr><th>Premium estimate</th><td>An estimate, not a quote: claims avoided = expected claims × share flagged × the share you assume is prevented. Premium effect uses a simplified experience-rating share; each board's formula is more involved and lags. Board claim costs are shown separately because the board, not the employer, pays them.</td></tr>
 <tr><th>Translations</th><td>Report-form wording is hand-written; briefings, films and worker reports are translated by Claude on request. Legal citations stay in English, and translations should be checked by a native speaker before site use.</td></tr>
 <tr><th>Human oversight</th><td>Every alert shows its warning signs and its controls; supervisors decide, record what they did in the controls record, and log the day so the model recalibrates.</td></tr>
-<tr><th>Data and privacy</th><td>Logged days and the controls record are stored with the page and visible to people it is shared with; record initials, not names of injured workers.</td></tr></table></div>
+<tr><th>Scan confidence</th><td>Based on how many of the last 20 work days have real logs and how recent the latest one is: Very low (none), Low, Partial (5 or more, latest within 2 work days), Good (15 or more, latest within a day). It stops at Good, because the model itself is still trained on simulated logs.</td></tr><tr><th>Data and privacy</th><td>Logged days and the controls record are stored with the page and visible to people it is shared with; record initials, not names of injured workers.</td></tr></table></div>
 <h2>Method & sources</h2>
 <p>A superintendent already knows who will be on site. This system answers <b>where</b> the next injury is building up, early enough to stop it. Each work day, for each of ten zones, it estimates the probability of an injury or a high-potential near miss in the next ${D.horizon} work days, names the warning signs behind it, and turns them into controls cited for the site's province.</p>
 <h3>What is real</h3><ul>
