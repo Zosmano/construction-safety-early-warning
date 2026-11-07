@@ -126,9 +126,9 @@ BC_PARTS = {3: "part-03-rights-and-responsibilities", 4: "part-04-general-condit
 YT_URL = {1: "part-1-general", 5: "part-5-cranes-hoisting-and-lifting", 6: "part-6-mobile-equipment", 8: "part-8-material-and-storage", 9: "part-9-electrical-safety", 10: "part-10-construction-and-building-safety"}
 LINKS = {  # act, main regulation, further instruments as (name, url)
     "BC": [("Workers Compensation Act", WSBC + "workers-compensation-act"), ("OHS Regulation", WSBC + "ohs-regulation/part-03-rights-and-responsibilities")],
-    "AB": [("OHS Act", "https://open.alberta.ca/publications/o02p2"), ("OHS Code", "https://kings-printer.alberta.ca/documents/OHS/OHSCode.pdf")],
+    "AB": [("OHS Act", "https://open.alberta.ca/publications/o02p2"), ("OHS Code (current to March 31, 2025)", "https://kings-printer.alberta.ca/documents/OHS/OHSCode_March_31,_2025_(rep_s850)_only.pdf")],
     "SK": [("Saskatchewan Employment Act", "https://publications.saskatchewan.ca//api/v1/products/70351/formats/78194/download"), ("OHS Regulations, 2020", "https://publications.saskatchewan.ca/api/v1/products/112399/formats/126367/download")],
-    "MB": [("Workplace Safety and Health Act", "https://web2.gov.mb.ca/laws/statutes/ccsm/w210.php"), ("Regulation M.R. 217/2006", "https://web2.gov.mb.ca/laws/regs/current/_pdf-regs.php?reg=217/2006")],
+    "MB": [("Workplace Safety and Health Act", "https://web2.gov.mb.ca/laws/statutes/ccsm/w210.php"), ("Regulation M.R. 217/2006", "https://web2.gov.mb.ca/laws/regs/current/217-2006.php?lang=en")],
     "ON": [("OHSA", "https://www.ontario.ca/laws/statute/90o01"), ("O. Reg. 213/91, construction projects", "https://www.ontario.ca/laws/regulation/910213"), ("O. Reg. 297/13, training", "https://www.ontario.ca/laws/regulation/130297"), ("O. Reg. 490/09, designated substances", "https://www.ontario.ca/laws/regulation/090490")],
     "QC": [("Act respecting occupational health and safety", "https://www.legisquebec.gouv.qc.ca/en/document/cs/S-2.1"), ("Safety Code for the construction industry", "https://www.legisquebec.gouv.qc.ca/en/document/cr/S-2.1,%20r.%204")],
     "NB": [("OHS Act", "https://laws.gnb.ca/en/document/cs/O-0.2"), ("General Regulation 91-191", "https://laws.gnb.ca/en/document/cr/91-191")],
