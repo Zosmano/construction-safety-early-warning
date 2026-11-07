@@ -83,6 +83,14 @@ BROAD = {("BC", "4.19"), ("ON", "25"), ("AB", "7"), ("MB", "4"), ("QC", "51"), (
 BROAD_NOTE = " This is a broad duty and may not name the specific hazard."
 
 
+# Links straight to each section (built and checked November 2026, see README "Exact, linked citations"):
+# an anchor where the site has one, a text link (#:~:text=) where it doesn't, and #page=N for PDFs.
+import json as _json
+from pathlib import Path as _Path
+_LINKS = _json.loads((_Path(__file__).with_name("citation_links.json")).read_text(encoding="utf-8"))
+DEEP, NU_PAGES = _LINKS["deep"], _LINKS["nu_pages"]
+
+
 def cite(j, key):
     """(citation text, url, summary) for a control, or None if no section has been checked."""
     row = SECTIONS.get(j, {}).get(key)
@@ -90,6 +98,9 @@ def cite(j, key):
         return None
     ins, sec, title = row
     name, url = INST[j][ins]
+    url = DEEP.get(f"{j}|{ins}|{sec}", url)
     word = "subdiv." if j == "QC" and ins == "r" else "s."
     text = f"{name}, {word} {sec}" + (f" {title}" if title else "")
-    return text, url, SUMMARY[j][sec] + (BROAD_NOTE if (j, sec) in BROAD else "")
+    page = NU_PAGES.get(f"{j}|{ins}|{sec}")
+    note = f" Nunavut publishes this as a download only: see page {page} of the PDF." if page else ""
+    return text, url, SUMMARY[j][sec] + (BROAD_NOTE if (j, sec) in BROAD else "") + note
