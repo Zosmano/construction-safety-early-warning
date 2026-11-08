@@ -2630,14 +2630,102 @@ DRAW.ahead = () => {
 /* ================================================================== premium & COR: prevention in dollars
    The board pays the claim; the employer saves through the experience-rated premium, the uninsured costs of each
    lost-time claim, and safety-program incentives. Every input is editable; the examples are placeholders. */
+/* Safety-program incentives by board. Checked November 2026. "board" = read on the board's own page;
+   "secondary" = from industry or news sources, not confirmed on the board's page; "none" = no COR-linked incentive found. */
 const PM_PROG = {
-  BC: `<p><b>WorkSafeBC.</b> Your premium starts from your industry's base rate and is adjusted by <b>experience rating</b>: your own claims costs over recent years compared with your industry's.</p>
-       <p><b>Certificate of Recognition (COR).</b> WorkSafeBC pays an incentive to employers who hold a COR and meet the program's requirements. In construction the COR is issued through the certifying partner, the BC Construction Safety Alliance.</p>`,
-  ON: `<p><b>WSIB Rate Framework.</b> Since 2020 each business's premium rate moves up or down from its class rate according to its own claims history.</p>
-       <p><b>Health and Safety Excellence program.</b> WSIB offers rebates to businesses that complete approved health and safety topics.</p>`,
-  AB: `<p><b>WCB-Alberta.</b> Premiums are adjusted by experience rating on your own claims costs.</p>
-       <p><b>Partners in Injury Reduction (PIR).</b> Employers who hold a Certificate of Recognition and perform well can receive a refund on part of their premium.</p>` };
-const pmProg = j => PM_PROG[j] || `<p><b>${esc(CA.jur[j].board)}.</b> Your premium depends on your industry's rate and, usually, your own claims record. Ask your board how experience rating and any safety-program incentive work in ${esc(NMP[j])}.</p>`;
+  BC: { name: "WorkSafeBC: COR financial incentive", status: "board", pct: 10, pctNote: "10% of base assessment for the certified units",
+    how: "Premiums start from your industry's base rate and are adjusted by experience rating. Employers who hold a Certificate of Recognition (COR) can also receive a yearly incentive.",
+    elig: ["An active WorkSafeBC account", "A COR certification audit or annual maintenance audit passed in the previous year", "Payroll reported to WorkSafeBC by the incentive deadline",
+      "No OHS conviction or administrative penalty in the previous year", "Decision held back while an investigation, review or appeal is open"],
+    amount: "10% of base assessment premiums for each certified classification unit: assessable payroll × (CU base rate ÷ 100) × 10%. Minimum: the lesser of $1,000 or 75% of premiums paid. Credited to your WorkSafeBC account from the second quarter of the following year.",
+    certifier: "BC Construction Safety Alliance (BCCSA)",
+    src: [["WorkSafeBC: COR incentives", "https://www.worksafebc.com/en/health-safety/create-manage/certificate-recognition/incentives"]] },
+  AB: { name: "WCB-Alberta: Partnerships in Injury Reduction (PIR)", status: "board", pct: 10, pctNote: "10% in the first COR year, 5% after",
+    how: "Register with PIR and hold a valid COR. WCB uses whichever of three performance measures gives you the biggest refund, up to 20% of your industry rate.",
+    elig: ["Registered with PIR", "A valid COR: at least 80% overall and 50% on each audit element", "First-time registrants have one year of grace to complete the COR"],
+    amount: "Holding a COR: 10% of the industry rate in the first year, then 5% each year it's maintained. Improving on your own claim-cost record: 1% refund for each 1% improvement, up to 20%. Performing well above your industry for two years in a row: 10% to 20%. Maximum 20%.",
+    certifier: "Alberta Construction Safety Association (ACSA) and other certifying partners",
+    src: [["WCB-Alberta: PIR", "https://wcb.ab.ca/insurance-and-premiums/lower-your-premiums/partnerships-in-injury-reduction-(pir).html"]] },
+  SK: { name: "WCB Saskatchewan: experience rating", status: "none", pct: null,
+    how: "Premiums are adjusted by the experience rating program on your own claims history. I found no WCB Saskatchewan rebate tied to holding a COR; WCB's site was unavailable when checked, so confirm this with WCB.",
+    elig: ["Experience rating applies automatically to rated employers"],
+    amount: "Depends on your claims record against your industry's. COR is still widely required to bid on construction work.",
+    certifier: "Saskatchewan Construction Safety Association (SCSA)",
+    src: [["WCB Saskatchewan: experience rating", "https://wcbsask.com/experience-rating-program"]] },
+  MB: { name: "WCB Manitoba: Prevention Rebate Program (SAFE Work Certified)", status: "board", pct: 15, pctNote: "15% of premium, at least $3,000, at most 50%",
+    how: "SAFE Work Manitoba pays a yearly rebate to employers who are SAFE Work Certified and meet the conditions below.",
+    elig: ["SAFE Work Certified, with the certification not under review", "A maintenance or recertification audit completed and submitted", "The 12-month rebate eligibility period completed, from the certification anniversary",
+      "No administrative penalties or convictions during that period", "An active WCB account, with annual payroll and hours worked reported"],
+    amount: "15% of premium or $3,000, whichever is greater, but never more than 50% of premium. Paid the month after the certification anniversary, as a credit or a cheque.",
+    certifier: "Construction Safety Association of Manitoba (COR, recognized for SAFE Work Certified)",
+    src: [["WCB Manitoba: Prevention rebate program", "https://www.wcb.mb.ca/safeworkmanitoba/safety-training-and-certification/prevention-rebate-program/"]] },
+  ON: { name: "WSIB: Health and Safety Excellence program, or Supporting Ontario's Safe Employers", status: "board", pct: null,
+    how: "Premiums move from your class rate under the WSIB Rate Framework according to your own claims history. On top of that you can join one of two rebate programs, but not both.",
+    elig: ["Health and Safety Excellence: an active WSIB account, at least one paid employee, Schedule 1 for rebates, and work with a WSIB-approved provider",
+      "Each completed topic is validated, with no allowed traumatic fatality from plan approval to payment",
+      "Supporting Ontario's Safe Employers: for mature systems accredited by the Chief Prevention Officer, such as a COR through IHSA. Its rebates last up to three years and rule out the other program"],
+    amount: "Health and Safety Excellence: up to five topics per action plan, paid per topic by your previous year's premiums ($2,000 under $50,000 of premiums, up to $50,000 per topic over $5 million), plus $1,000 when the plan is approved. Total capped at twice the previous year's premiums; paid quarterly. Supporting Ontario's Safe Employers: depends on premiums, your predictability rating and program year, so ask WSIB for an estimate.",
+    certifier: "Infrastructure Health and Safety Association (IHSA) for COR",
+    src: [["WSIB: Health and Safety Excellence FAQ", "https://www.wsib.ca/en/health-and-safety-excellence-program-frequently-asked-questions"], ["WSIB: Ontario Safe Employers Rebate Program", "https://www.wsib.ca/en/ontario-safe-employers-rebate-program"]] },
+  QC: { name: "CNESST: prevention mutual groups and retrospective rating", status: "none", pct: null,
+    how: "Quebec has no COR program. Employers can lower their rate by joining a prevention mutual group (mutuelle de prévention), whose members are rated on their combined results, or, if large, through retrospective rating. Construction employers pay a mandatory levy for ASP Construction.",
+    elig: ["Mutual groups: join through an organizer accredited by CNESST", "Retrospective rating: annual premium around $350,000 or more; group requests by September 30 before the rating year"],
+    amount: "Depends on the group's or employer's results. A mutual group's rate can also rise if its members do worse than the classification unit.",
+    certifier: "No COR. ASP Construction delivers prevention services",
+    src: [["CNESST", "https://www.cnesst.gouv.qc.ca/"]] },
+  NB: { name: "WorkSafeNB: experience rating, SAFIS and performance refunds", status: "none", pct: null,
+    how: "I found no WorkSafeNB rebate for holding a COR. Premiums are experience-rated. Large employers can opt into SAFIS, a retrospective rating scheme with refunds or surcharges, and WorkSafeNB returns surplus as performance refunds when funding is high.",
+    elig: ["SAFIS: average yearly premiums of $500,000 or more over the last 3 years, a WorkSafeNB health and safety evaluation of at least 80%, a return-to-work program, on-time reporting and payment for 5 years, and 5 years of stable operation in New Brunswick",
+      "Performance refunds: paid to eligible employers when WorkSafeNB's funding level is above 140%"],
+    amount: "SAFIS refunds or surcharges follow your actual against expected claim costs. Performance refunds totalled $53.2 million in 2025.",
+    certifier: "New Brunswick Construction Safety Association (COR, often a tender requirement)",
+    src: [["WorkSafeNB: SAFIS policy 23-610", "https://www.worksafenb.ca/policy-and-legal/policy/view-our-policies/safety-achievement-financial-incentive-system-safis"]] },
+  NS: { name: "WCB Nova Scotia: Practice Incentive Rebate (WCB Safety Certified)", status: "secondary", pct: 10, pctNote: "up to 10%, per Construction Safety Nova Scotia",
+    how: "Construction and trucking employers who are WCB Safety Certified can get a percentage of their premiums back. Certification is required to bid on Province of Nova Scotia construction work.",
+    elig: ["In the construction or trucking industries", "WCB Safety Certified through a WCB-approved audit provider (a COR from Construction Safety Nova Scotia qualifies)", "Certification renewed before it expires (usually 1 to 3 years)"],
+    amount: "A percentage of premiums. WCB's page doesn't state the rate; Construction Safety Nova Scotia cites up to 10%. Ask employer.incentives@wcb.ns.ca for the current rate.",
+    certifier: "Construction Safety Nova Scotia",
+    src: [["WCB Nova Scotia: Safety Certified", "https://www.wcb.ns.ca/employers/workplace-injury-insurance/wcb-safety-certified"], ["Construction Safety Nova Scotia: COR", "https://constructionsafetyns.ca/cor/"]] },
+  PE: { name: "WCB PEI: experience rating and surplus distribution", status: "none", pct: null,
+    how: "I found no WCB PEI rebate tied to a COR. Premiums are experience-rated, and the board has recently returned surplus to employers.",
+    elig: ["Experience rating applies to rated employers", "Surplus distribution goes to eligible registered employers when declared"],
+    amount: "WCB PEI announced an $18 million surplus distribution in December 2025, and a 2026 average rate of $1.28 per $100 that includes a $0.09 rebate.",
+    certifier: "No PEI association offers COR in construction (none is a member of the Canadian Federation of Construction Safety Associations)",
+    src: [["WCB PEI", "https://www.wcb.pe.ca/"]] },
+  NL: { name: "WorkplaceNL: PRIME", status: "board", pct: 5, pctNote: "5% practice refund on average assessment",
+    how: "PRIME pays a practice refund for meeting health, safety and return-to-work requirements, and an experience refund or charge based on your claim costs.",
+    elig: ["Construction employers (NIC 4011 to 4499, or 4591): COR certified, with a valid Letter of Good Standing from the NL Construction Safety Association", "Path 1 or Path 2 requirements met, depending on employer size",
+      "Annual employer statement filed online by the end of February", "You must qualify for the practice refund before an experience refund"],
+    amount: "Practice incentive: 5% of your average assessment. Experience incentive: a refund, or a charge, depending on your claim costs against your expected range. Charges apply whether or not you qualify for refunds.",
+    certifier: "Newfoundland and Labrador Construction Safety Association (NLCSA)",
+    src: [["WorkplaceNL: PRIME", "https://workplacenl.ca/employers/health-and-safety/prime/"]] },
+  YT: { name: "Yukon WSCB: CHOICES rebate", status: "secondary", pct: 10, pctNote: "10% for COR or SECOR holders, up to $25,000",
+    how: "CHOICES rebates part of the annual assessment for employers who invest in safety. COR or SECOR holders get the largest rebate. COR is required on Government of Yukon construction contracts.",
+    elig: ["An account in good standing, with no outstanding penalties, orders or payments", "Apply on the annual Employer Payroll Return (Section B)", "Without COR or SECOR: proof of the training required for your industry"],
+    amount: "10% of assessments paid for COR or SECOR holders; 4% to 6% with qualifying training only; at most $25,000 a year. From CFIB and news sources, so confirm the current terms and application window with the board.",
+    certifier: "Northern Safety Network Yukon (COR, SECOR and COR equivalency)",
+    src: [["Government of Yukon: Certificate of Recognition", "https://yukon.ca/en/certificate-recognition"], ["CFIB: CHOICES rebate", "https://www.cfib-fcei.ca/en/tools-resources/training-employees-through-Vubiz-CHOICES-rebate-program"]] },
+  NT: { name: "WSCC: Safe Workplace program", status: "none", pct: null,
+    how: "The WSCC recognizes employers who make safety a core value. Employers accredited by a third-party program such as COR are designated Advanced Safe Workplace employers. I found no premium rebate attached.",
+    elig: ["Meet the WSCC's Safe Workplace criteria", "For Advanced status: a third-party accredited program in the NWT or Nunavut, such as COR"],
+    amount: "Recognition only, as far as published. Ask SafeWorkplace@wscc.nt.ca about current incentives.",
+    certifier: "Northern Safety Association (COR)",
+    src: [["WSCC: Safe Workplace program", "https://connect.wscc.nt.ca/Help/OHS-e-Services/Safe-Workplace-Program"]] },
+};
+PM_PROG.NU = { ...PM_PROG.NT, name: "WSCC (Nunavut): Safe Workplace program" };
+const PM_STATUS = { board: "Checked on the board's page, November 2026", secondary: "From secondary sources, November 2026: confirm with the board", none: "No COR-linked incentive found, November 2026" };
+function pmProg(j) {
+  const p = PM_PROG[j];
+  if (!p) return "";
+  const li = a => a.map(x => `<li>${esc(x)}</li>`).join("");
+  return `<p style="margin:0 0 4px"><b>${esc(p.name)}</b></p><p class="note" style="margin:0 0 8px">${PM_STATUS[p.status]}</p>
+    <p>${esc(p.how)}</p>
+    <p style="margin:8px 0 2px"><b>Eligibility</b></p><ul style="margin:0 0 8px;padding-left:18px">${li(p.elig)}</ul>
+    <p><b>Amount.</b> ${esc(p.amount)}</p>
+    <p><b>Certifies COR in construction:</b> ${esc(p.certifier)}</p>
+    ${p.pct ? `<p><button class="btn" id="pmUse">Use ${p.pct}% in the calculation</button> <span class="note">${esc(p.pctNote)}</span></p>` : ""}
+    <p class="note">Source: ${p.src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`).join(" · ")}. Rules and amounts change; confirm with your board before relying on them.</p>`;
+}
 const PM = { prov: "BC", workers: 120, payroll: 9000000, rate: 3.0, claims: null, cost: 40000, unins: 15000, basis: "sim", eff: 25, cred: 30, incent: 0, fee: 0 };
 function pmBasis() { const o = [["sim", `Canadian test portfolio: ${pct(M.warned_share)} flagged`, M.warned_share]];
   if (S.nyc) o.push(["nyc", `Real NYC incidents: ${pct(S.nyc.warned_share)} flagged`, S.nyc.warned_share]);
@@ -2654,7 +2742,8 @@ function pmCalc(eff = PM.eff) {
 const money = v => "$" + Math.round(v).toLocaleString("en-CA");
 function pmRender() {
   const r = pmCalc();
-  $("#pmProg").innerHTML = pmProg(PM.prov) + `<p class="note">Check the current rules, eligibility and amounts with your board; this page doesn't hold them.</p>`;
+  $("#pmProg").innerHTML = pmProg(PM.prov);
+  const use = $("#pmUse"); if (use) use.onclick = () => { PM.incent = PM_PROG[PM.prov].pct; const f = $("#pm_incent"); if (f) f.value = PM.incent; pmRender(); };
   $("#pmKpis").innerHTML = [["Lost-time claims avoided", r.avoided.toFixed(1) + " a year", `of ${r.claims} expected: ${pct(r.flag)} flagged × ${PM.eff}% prevented`],
     ["Your savings", money(r.total) + " a year", "premium effect + uninsured costs + incentive"],
     ["Net of the subscription", PM.fee ? money(r.net) : "–", PM.fee ? (r.payback ? `pays back in ${r.payback.toFixed(1)} months` : "") : "enter the subscription cost"],
