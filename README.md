@@ -114,7 +114,7 @@ A page hosted on claude.ai can't reach other websites, so that copy shows a save
   - **Text links** (21): Ontario's e-Laws loads its text in stages, which throws off anchor jumps, so its links highlight the first words of the section (`#:~:text=`).
   - **PDF only** (70): Alberta, Saskatchewan, Nova Scotia's Act, PEI and the Northwest Territories publish these only as PDFs. The link asks the viewer to open at the page (`#page=N`), and the summary gives the page, because not every PDF viewer honours it.
   - **No anchors** (13): Yukon's regulation pages have none. The link tries a text link, and the summary says which section to scroll to.
-  - **Nunavut** (15): links to the official PDF download, and the summary gives the page.
+  - **Nunavut** (15): its regulations exist only as a forced PDF download, which no link can open at a page. The link goes to the official page with the Download button, and the summary gives the page.
   - **Sources:** Alberta's links use the Code consolidated to March 31, 2025.
 
   The other 65 pairs keep the law and topic, because no specific section was confirmed; most are in PEI (16), Yukon (10) and Nunavut (8). The Yukon and PEI Acts couldn't be read, and no lawyer has reviewed any of this.
